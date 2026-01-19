@@ -42,8 +42,12 @@ import { format } from "date-fns";
 export default function Queue() {
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("pending");
+  const [viewMode, setViewMode] = useState("my_assigned");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [fundFilter, setFundFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
 
   useEffect(() => {
     loadUser();
@@ -54,7 +58,7 @@ export default function Queue() {
     setUser(currentUser);
   };
 
-  const { data: requests = [], isLoading } = useQuery({
+  const { data: allRequests = [], isLoading } = useQuery({
     queryKey: ["allRequests"],
     queryFn: () => base44.entities.FundRequest.list("-created_date"),
   });
@@ -64,32 +68,69 @@ export default function Queue() {
     queryFn: () => base44.entities.Fund.list(),
   });
 
-  const getStatusGroup = (status) => {
-    if (["Submitted", "In Review", "Needs Info"].includes(status)) return "pending";
-    if (["Approved", "Paid"].includes(status)) return "approved";
-    if (status === "Denied") return "denied";
-    if (status === "Draft") return "draft";
-    return "closed";
+  const { data: allReviews = [] } = useQuery({
+    queryKey: ["allReviews"],
+    queryFn: () => base44.entities.Review.list(),
+  });
+
+  // Calculate days since submission
+  const getDaysSince = (date) => {
+    if (!date) return 0;
+    const diff = Date.now() - new Date(date).getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
   };
+
+  // Filter requests based on view mode
+  const getRequestsForView = () => {
+    if (!user) return [];
+
+    let requests = [...allRequests];
+
+    if (viewMode === "my_assigned") {
+      // Show requests where user has a pending review assigned
+      const userReviews = allReviews.filter(r => 
+        r.reviewer_user_id === user.id && r.decision === "Pending"
+      );
+      const assignedRequestIds = userReviews.map(r => r.fund_request_id);
+      requests = requests.filter(r => assignedRequestIds.includes(r.id));
+    } else if (viewMode === "role_queue") {
+      // Show requests for user's role queue
+      const roleReviews = allReviews.filter(r => 
+        r.reviewer_user_id === `role_${user.app_role}` && r.decision === "Pending"
+      );
+      const queueRequestIds = roleReviews.map(r => r.fund_request_id);
+      requests = requests.filter(r => queueRequestIds.includes(r.id));
+    } else if (viewMode === "my_funds") {
+      // Show requests for funds owned by this user
+      const myFunds = funds.filter(f => f.fund_owner_id === user.id);
+      const myFundIds = myFunds.map(f => f.id);
+      requests = requests.filter(r => myFundIds.includes(r.fund_id));
+    }
+
+    return requests;
+  };
+
+  const requests = getRequestsForView();
 
   const filteredRequests = requests.filter((request) => {
     const matchesSearch =
+      request.request_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.student_full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.fund_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.intended_use_category?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === "all" || getStatusGroup(request.status) === statusFilter;
+    const matchesStatus = statusFilter === "all" || request.status === statusFilter;
     const matchesFund = fundFilter === "all" || request.fund_id === fundFilter;
+    const matchesCategory = categoryFilter === "all" || request.intended_use_category === categoryFilter;
     
-    return matchesSearch && matchesStatus && matchesFund;
+    const amount = request.requested_amount || 0;
+    const matchesMinAmount = !minAmount || amount >= parseFloat(minAmount);
+    const matchesMaxAmount = !maxAmount || amount <= parseFloat(maxAmount);
+    
+    return matchesSearch && matchesStatus && matchesFund && matchesCategory && matchesMinAmount && matchesMaxAmount;
   });
 
-  const statusCounts = {
-    all: requests.length,
-    pending: requests.filter(r => getStatusGroup(r.status) === "pending").length,
-    approved: requests.filter(r => getStatusGroup(r.status) === "approved").length,
-    denied: requests.filter(r => getStatusGroup(r.status) === "denied").length,
-  };
+  const categories = ["Tuition/Fees", "Books/Supplies", "Housing", "Food", "Transportation", "Medical", "Technology", "Other"];
 
   if (!user) {
     return (
@@ -99,6 +140,8 @@ export default function Queue() {
     );
   }
 
+  const isFundManager = user?.app_role === "fund_manager" || user?.app_role === "admin";
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -106,49 +149,96 @@ export default function Queue() {
         description="Review and process fund requests"
       />
 
-      {/* Status Tabs */}
-      <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+      {/* View Mode Tabs */}
+      <Tabs value={viewMode} onValueChange={setViewMode}>
         <TabsList className="bg-white/70 border">
-          <TabsTrigger value="all" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            All ({statusCounts.all})
+          <TabsTrigger value="my_assigned" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            My Assigned
           </TabsTrigger>
-          <TabsTrigger value="pending" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
-            Pending ({statusCounts.pending})
+          <TabsTrigger value="role_queue" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white">
+            Role Queue
           </TabsTrigger>
-          <TabsTrigger value="approved" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-            Approved ({statusCounts.approved})
-          </TabsTrigger>
-          <TabsTrigger value="denied" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
-            Denied ({statusCounts.denied})
-          </TabsTrigger>
+          {isFundManager && (
+            <TabsTrigger value="my_funds" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+              All for My Funds
+            </TabsTrigger>
+          )}
         </TabsList>
       </Tabs>
 
       {/* Filters */}
       <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
         <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="Search by student or fund..."
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Search by Request ID, student, or fund..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
-            <Select value={fundFilter} onValueChange={setFundFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Filter by fund" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Funds</SelectItem>
-                {funds.map((fund) => (
-                  <SelectItem key={fund.id} value={fund.id}>{fund.fund_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="Submitted">Submitted</SelectItem>
+                  <SelectItem value="In Review">In Review</SelectItem>
+                  <SelectItem value="Needs Info">Needs Info</SelectItem>
+                  <SelectItem value="Approved">Approved</SelectItem>
+                  <SelectItem value="Denied">Denied</SelectItem>
+                  <SelectItem value="Paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={fundFilter} onValueChange={setFundFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Fund" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Funds</SelectItem>
+                  {funds.map((fund) => (
+                    <SelectItem key={fund.id} value={fund.id}>{fund.fund_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Min $"
+                  value={minAmount}
+                  onChange={(e) => setMinAmount(e.target.value)}
+                  className="w-full"
+                />
+                <Input
+                  type="number"
+                  placeholder="Max $"
+                  value={maxAmount}
+                  onChange={(e) => setMaxAmount(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -199,56 +289,63 @@ export default function Queue() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
+                    <TableHead>Request ID</TableHead>
                     <TableHead>Student</TableHead>
                     <TableHead>Fund</TableHead>
-                    <TableHead>Category</TableHead>
                     <TableHead>Amount</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Current Step</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
+                    <TableHead>Age</TableHead>
                     <TableHead className="w-12"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRequests.map((request) => (
-                    <TableRow key={request.id} className="group hover:bg-slate-50/50">
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                            <User className="w-4 h-4 text-indigo-600" />
-                          </div>
+                  {filteredRequests.map((request) => {
+                    const daysSince = getDaysSince(request.submitted_at || request.created_date);
+                    
+                    return (
+                      <TableRow key={request.id} className="group hover:bg-slate-50/50">
+                        <TableCell>
+                          <span className="font-mono text-sm">{request.request_id}</span>
+                        </TableCell>
+                        <TableCell>
                           <div>
                             <p className="font-medium">{request.student_full_name}</p>
                             <p className="text-xs text-slate-500">{request.student_email}</p>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-slate-600">{request.fund_name}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="bg-slate-100">
-                          {request.intended_use_category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold">${request.requested_amount?.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <StatusBadge status={request.status} />
-                      </TableCell>
-                      <TableCell className="text-slate-500">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {request.submitted_at
-                            ? format(new Date(request.submitted_at), "MMM d, yyyy")
-                            : format(new Date(request.created_date), "MMM d, yyyy")}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={createPageUrl(`ReviewRequest?id=${request.id}`)}>
-                            <ArrowRight className="w-4 h-4" />
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-slate-600">{request.fund_name}</TableCell>
+                        <TableCell className="font-semibold">${request.requested_amount?.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="bg-slate-100 text-xs">
+                            {request.intended_use_category}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-slate-600">
+                            {request.current_step || "Not started"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={request.status} />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1 text-slate-500">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-sm">{daysSince}d</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" asChild>
+                            <Link to={createPageUrl(`ReviewRequest?id=${request.id}`)}>
+                              <ArrowRight className="w-4 h-4" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
