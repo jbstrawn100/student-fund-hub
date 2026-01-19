@@ -200,6 +200,11 @@ export default function Apply() {
       return;
     }
 
+    // Check if attachments required
+    if (selectedFund?.requires_attachments && formData.attachments.length === 0 && files.length === 0) {
+      alert("This fund requires supporting documents to be uploaded.");
+    }
+
     setUploading(true);
     const uploadedFiles = [];
 
@@ -450,14 +455,21 @@ export default function Apply() {
   }
 
   // Application Form
+  // Check category restrictions
+  const isCategoryAllowed = !selectedFund?.allowed_categories || 
+    selectedFund.allowed_categories.length === 0 ||
+    selectedFund.allowed_categories.includes(formData.intended_use_category);
+
   const isFormValid = 
     formData.student_full_name &&
     formData.student_email &&
     formData.requested_amount &&
     parseFloat(formData.requested_amount) > 0 &&
     formData.intended_use_category &&
+    isCategoryAllowed &&
     formData.intended_use_description?.length >= 30 &&
     formData.justification_paragraph?.length >= 100 &&
+    (!selectedFund?.requires_attachments || formData.attachments.length > 0) &&
     Object.keys(errors).length === 0;
 
   return (
@@ -604,11 +616,19 @@ export default function Apply() {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {USE_CATEGORIES.map((cat) => (
+                    {(selectedFund?.allowed_categories && selectedFund.allowed_categories.length > 0
+                      ? selectedFund.allowed_categories
+                      : USE_CATEGORIES
+                    ).map((cat) => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {selectedFund?.allowed_categories && selectedFund.allowed_categories.length > 0 && (
+                  <p className="text-xs text-slate-500">
+                    Only selected categories are allowed for this fund
+                  </p>
+                )}
               </div>
             </div>
 
@@ -657,10 +677,13 @@ export default function Apply() {
           <div className="space-y-4 pt-4 border-t">
             <h3 className="font-semibold text-slate-800 flex items-center gap-2">
               <Paperclip className="w-4 h-4" />
-              Supporting Documents (Optional)
+              Supporting Documents {selectedFund?.requires_attachments && <span className="text-red-600">*</span>}
             </h3>
             <p className="text-sm text-slate-500">
               Upload any supporting documents (PDF, JPG, PNG, DOC - max 10MB per file)
+              {selectedFund?.requires_attachments && (
+                <span className="text-amber-600 font-medium"> - Required for this fund</span>
+              )}
             </p>
 
             <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-300 transition-colors">

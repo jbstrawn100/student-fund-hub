@@ -98,6 +98,33 @@ export default function ReviewRequest() {
   const submitReview = async () => {
     setSubmitting(true);
 
+    // Check budget before approving
+    if (decision === "Approved" && fund) {
+      const approvedRequests = await base44.entities.FundRequest.filter({ 
+        fund_id: fund.id, 
+        status: "Approved" 
+      });
+      const committedAmount = approvedRequests.reduce((sum, r) => sum + (r.requested_amount || 0), 0);
+      
+      const fundDisbursements = await base44.entities.Disbursement.filter({ fund_id: fund.id });
+      const paidAmount = fundDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0);
+      
+      const remaining = fund.total_budget - paidAmount - committedAmount;
+      
+      if (remaining < request.requested_amount) {
+        if (fund.budget_enforcement === "block") {
+          alert(`Cannot approve: Insufficient budget. Remaining: $${remaining.toLocaleString()}, Requested: $${request.requested_amount.toLocaleString()}`);
+          setSubmitting(false);
+          return;
+        } else if (fund.budget_enforcement === "warn") {
+          if (!confirm(`Warning: This approval will exceed the remaining budget by $${(request.requested_amount - remaining).toLocaleString()}. Continue?`)) {
+            setSubmitting(false);
+            return;
+          }
+        }
+      }
+    }
+
     const newStatus = decision === "Approved" ? "Approved" 
                     : decision === "Denied" ? "Denied"
                     : decision === "Needs Info" ? "Needs Info"
@@ -114,9 +141,10 @@ export default function ReviewRequest() {
       decided_at: new Date().toISOString()
     });
 
-    // Update request status
+    // Update request status and lock if not "Needs Info"
     await base44.entities.FundRequest.update(requestId, {
-      status: newStatus
+      status: newStatus,
+      locked: decision !== "Needs Info"
     });
 
     // Create audit log
