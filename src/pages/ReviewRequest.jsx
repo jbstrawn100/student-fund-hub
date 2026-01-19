@@ -54,6 +54,7 @@ export default function ReviewRequest() {
   const [showDisbursementModal, setShowDisbursementModal] = useState(false);
   const [disbursementData, setDisbursementData] = useState({
     amount_paid: "",
+    paid_at: format(new Date(), "yyyy-MM-dd"),
     payment_method: "",
     notes: "",
     receipt_upload: ""
@@ -226,26 +227,33 @@ export default function ReviewRequest() {
   const submitDisbursement = async () => {
     setSubmitting(true);
 
+    const amountPaid = parseFloat(disbursementData.amount_paid);
+
     await base44.entities.Disbursement.create({
       fund_request_id: requestId,
       fund_id: request.fund_id,
       fund_name: request.fund_name,
       student_name: request.student_full_name,
-      amount_paid: parseFloat(disbursementData.amount_paid),
-      paid_at: new Date().toISOString(),
+      amount_paid: amountPaid,
+      paid_at: disbursementData.paid_at || new Date().toISOString(),
       payment_method: disbursementData.payment_method,
       notes: disbursementData.notes,
       receipt_upload: disbursementData.receipt_upload
     });
 
-    // Update request status to Paid
+    // Calculate total disbursed for this request
+    const allDisbursements = await base44.entities.Disbursement.filter({ fund_request_id: requestId });
+    const totalDisbursed = allDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0) + amountPaid;
+
+    // Update request status based on disbursement
+    const newStatus = totalDisbursed >= request.requested_amount ? "Paid" : "Approved";
     await base44.entities.FundRequest.update(requestId, {
-      status: "Paid"
+      status: newStatus
     });
 
     // Update fund remaining budget
     if (fund) {
-      const newRemaining = (fund.remaining_budget || fund.total_budget) - parseFloat(disbursementData.amount_paid);
+      const newRemaining = (fund.remaining_budget || fund.total_budget) - amountPaid;
       await base44.entities.Fund.update(fund.id, {
         remaining_budget: newRemaining
       });
@@ -258,12 +266,25 @@ export default function ReviewRequest() {
       action_type: "DISBURSEMENT_CREATED",
       entity_type: "Disbursement",
       entity_id: requestId,
-      details: JSON.stringify(disbursementData)
+      details: JSON.stringify({ 
+        ...disbursementData, 
+        amount_paid: amountPaid,
+        total_disbursed: totalDisbursed,
+        requested_amount: request.requested_amount
+      })
     });
 
     queryClient.invalidateQueries(["fundRequest", requestId]);
     queryClient.invalidateQueries(["disbursements", requestId]);
+    queryClient.invalidateQueries(["allDisbursements"]);
     setShowDisbursementModal(false);
+    setDisbursementData({
+      amount_paid: "",
+      paid_at: "",
+      payment_method: "",
+      notes: "",
+      receipt_upload: ""
+    });
     setSubmitting(false);
   };
 
@@ -303,6 +324,10 @@ export default function ReviewRequest() {
 
   // Get internal comments (reviews with comments)
   const internalComments = reviews.filter(r => r.comments && r.comments.trim());
+
+  // Calculate total disbursed and remaining
+  const totalDisbursed = disbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0);
+  const remainingToDisburse = (request.requested_amount || 0) - totalDisbursed;
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -606,19 +631,45 @@ export default function ReviewRequest() {
                   Ready for Disbursement
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-emerald-700 text-sm mb-4">
-                  This request has been approved. You can now process the payment.
-                </p>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-emerald-700">Approved Amount:</span>
+                    <span className="font-semibold text-emerald-800">
+                      ${request.requested_amount?.toLocaleString()}
+                    </span>
+                  </div>
+                  {totalDisbursed > 0 && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-emerald-700">Already Disbursed:</span>
+                        <span className="font-semibold text-emerald-800">
+                          ${totalDisbursed.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-2 border-t border-emerald-200">
+                        <span className="text-emerald-700">Remaining:</span>
+                        <span className="font-bold text-emerald-900">
+                          ${remainingToDisburse.toLocaleString()}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
                 <Button
                   onClick={() => {
-                    setDisbursementData({ ...disbursementData, amount_paid: request.requested_amount.toString() });
+                    setDisbursementData({ 
+                      ...disbursementData, 
+                      amount_paid: remainingToDisburse.toString(),
+                      paid_at: format(new Date(), "yyyy-MM-dd")
+                    });
                     setShowDisbursementModal(true);
                   }}
                   className="w-full bg-emerald-600 hover:bg-emerald-700"
+                  disabled={remainingToDisburse <= 0}
                 >
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Process Payment
+                  {remainingToDisburse > 0 ? "Process Payment" : "Fully Disbursed"}
                 </Button>
               </CardContent>
             </Card>
@@ -663,29 +714,33 @@ export default function ReviewRequest() {
           {disbursements.length > 0 && (
             <Card className="bg-violet-50 border-violet-200">
               <CardHeader>
-                <CardTitle className="text-lg text-violet-800">Payment Complete</CardTitle>
+                <CardTitle className="text-lg text-violet-800">Payment History</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 {disbursements.map((d) => (
-                  <div key={d.id} className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-violet-600">Amount Paid</span>
-                      <span className="font-bold text-violet-800">${d.amount_paid?.toLocaleString()}</span>
+                  <div key={d.id} className="p-3 bg-white/50 rounded-lg space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-violet-800 text-lg">
+                          ${d.amount_paid?.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-violet-600">{d.payment_method}</p>
+                      </div>
+                      <span className="text-xs text-violet-600">
+                        {format(new Date(d.paid_at), "MMM d, yyyy")}
+                      </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-violet-600">Method</span>
-                      <span className="text-violet-800">{d.payment_method}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-violet-600">Date</span>
-                      <span className="text-violet-800">{format(new Date(d.paid_at), "MMM d, yyyy")}</span>
-                    </div>
+                    {d.notes && (
+                      <p className="text-sm text-violet-700 border-t border-violet-200 pt-2">
+                        {d.notes}
+                      </p>
+                    )}
                     {d.receipt_upload && (
                       <a
                         href={d.receipt_upload}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-violet-600 hover:text-violet-800"
+                        className="flex items-center gap-2 text-violet-600 hover:text-violet-800 text-sm"
                       >
                         <FileText className="w-4 h-4" />
                         View Receipt
@@ -693,6 +748,18 @@ export default function ReviewRequest() {
                     )}
                   </div>
                 ))}
+                <div className="pt-3 border-t border-violet-300">
+                  <div className="flex justify-between font-bold">
+                    <span className="text-violet-700">Total Paid:</span>
+                    <span className="text-violet-900">${totalDisbursed.toLocaleString()}</span>
+                  </div>
+                  {remainingToDisburse > 0 && (
+                    <div className="flex justify-between text-sm mt-1">
+                      <span className="text-violet-600">Remaining:</span>
+                      <span className="text-violet-700">${remainingToDisburse.toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
@@ -741,20 +808,53 @@ export default function ReviewRequest() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="p-3 bg-slate-50 rounded-lg text-sm space-y-1">
+              <div className="flex justify-between">
+                <span className="text-slate-600">Requested:</span>
+                <span className="font-semibold">${request.requested_amount?.toLocaleString()}</span>
+              </div>
+              {totalDisbursed > 0 && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Previously Paid:</span>
+                    <span className="font-semibold">${totalDisbursed.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between pt-1 border-t">
+                    <span className="text-slate-600">Remaining:</span>
+                    <span className="font-bold">${remainingToDisburse.toLocaleString()}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div className="space-y-2">
-              <Label>Amount</Label>
+              <Label>Amount to Pay *</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   type="number"
                   className="pl-9"
+                  max={remainingToDisburse}
                   value={disbursementData.amount_paid}
                   onChange={(e) => setDisbursementData({ ...disbursementData, amount_paid: e.target.value })}
                 />
               </div>
+              <p className="text-xs text-slate-500">
+                Can be partial. Max: ${remainingToDisburse.toLocaleString()}
+              </p>
             </div>
+
             <div className="space-y-2">
-              <Label>Payment Method</Label>
+              <Label>Payment Date *</Label>
+              <Input
+                type="date"
+                value={disbursementData.paid_at}
+                onChange={(e) => setDisbursementData({ ...disbursementData, paid_at: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Payment Method *</Label>
               <Select
                 value={disbursementData.payment_method}
                 onValueChange={(value) => setDisbursementData({ ...disbursementData, payment_method: value })}
@@ -770,14 +870,17 @@ export default function ReviewRequest() {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
               <Label>Notes</Label>
               <Textarea
+                rows={3}
                 value={disbursementData.notes}
                 onChange={(e) => setDisbursementData({ ...disbursementData, notes: e.target.value })}
-                placeholder="Any additional notes..."
+                placeholder="Transaction reference, check number, etc..."
               />
             </div>
+
             <div className="space-y-2">
               <Label>Receipt (Optional)</Label>
               <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center">
@@ -786,14 +889,15 @@ export default function ReviewRequest() {
                   className="hidden"
                   id="receiptUpload"
                   onChange={handleReceiptUpload}
+                  accept=".pdf,.jpg,.jpeg,.png"
                 />
                 <label htmlFor="receiptUpload" className="cursor-pointer">
                   <Upload className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600">Click to upload receipt</p>
+                  <p className="text-sm text-slate-600">
+                    {disbursementData.receipt_upload ? "✓ Receipt uploaded" : "Click to upload receipt"}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">PDF, JPG, PNG</p>
                 </label>
-                {disbursementData.receipt_upload && (
-                  <p className="text-sm text-emerald-600 mt-2">✓ Receipt uploaded</p>
-                )}
               </div>
             </div>
           </div>
