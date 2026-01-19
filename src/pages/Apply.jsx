@@ -19,6 +19,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Alert,
+  AlertDescription,
+} from "@/components/ui/alert";
+import {
   Wallet,
   Upload,
   X,
@@ -26,11 +38,13 @@ import {
   Calendar,
   DollarSign,
   ArrowRight,
-  ArrowLeft,
   Send,
   Save,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  AlertTriangle,
+  Paperclip,
+  File
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -45,12 +59,25 @@ const USE_CATEGORIES = [
   "Other"
 ];
 
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export default function Apply() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [step, setStep] = useState(1);
   const [selectedFund, setSelectedFund] = useState(null);
   const [formData, setFormData] = useState({
+    student_full_name: "",
+    student_email: "",
+    student_phone: "",
     requested_amount: "",
     intended_use_category: "",
     intended_use_description: "",
@@ -59,6 +86,8 @@ export default function Apply() {
   });
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     loadUser();
@@ -68,6 +97,12 @@ export default function Apply() {
   const loadUser = async () => {
     const currentUser = await base44.auth.me();
     setUser(currentUser);
+    setFormData(prev => ({
+      ...prev,
+      student_full_name: currentUser.full_name || "",
+      student_email: currentUser.email || "",
+      student_phone: currentUser.phone || ""
+    }));
   };
 
   const checkUrlParams = () => {
@@ -88,28 +123,105 @@ export default function Apply() {
       const fund = funds.find(f => f.id === selectedFund.id);
       if (fund) {
         setSelectedFund(fund);
-        setStep(2);
       }
     }
   }, [funds, selectedFund?.id]);
 
+  const validateField = (name, value) => {
+    const newErrors = { ...errors };
+
+    switch (name) {
+      case "student_full_name":
+        if (!value || value.trim().length === 0) {
+          newErrors.student_full_name = "Full name is required";
+        } else {
+          delete newErrors.student_full_name;
+        }
+        break;
+      case "student_email":
+        if (!value || !value.includes("@")) {
+          newErrors.student_email = "Valid email is required";
+        } else {
+          delete newErrors.student_email;
+        }
+        break;
+      case "requested_amount":
+        const amount = parseFloat(value);
+        if (!value || amount <= 0) {
+          newErrors.requested_amount = "Amount must be greater than 0";
+        } else if (selectedFund?.max_request_amount && amount > selectedFund.max_request_amount) {
+          newErrors.requested_amount = `Amount cannot exceed $${selectedFund.max_request_amount.toLocaleString()}`;
+        } else {
+          delete newErrors.requested_amount;
+        }
+        break;
+      case "intended_use_category":
+        if (!value) {
+          newErrors.intended_use_category = "Category is required";
+        } else {
+          delete newErrors.intended_use_category;
+        }
+        break;
+      case "intended_use_description":
+        if (!value || value.trim().length < 30) {
+          newErrors.intended_use_description = "Description must be at least 30 characters";
+        } else {
+          delete newErrors.intended_use_description;
+        }
+        break;
+      case "justification_paragraph":
+        if (!value || value.trim().length < 100) {
+          newErrors.justification_paragraph = "Justification must be at least 100 characters";
+        } else {
+          delete newErrors.justification_paragraph;
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+  };
+
+  const handleInputChange = (name, value) => {
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
+  };
+
   const handleFileUpload = async (e) => {
-    const files = e.target.files;
+    const files = Array.from(e.target.files);
     if (!files.length) return;
 
+    // Validate files
+    const invalidFiles = files.filter(file => 
+      !ALLOWED_FILE_TYPES.includes(file.type) || file.size > MAX_FILE_SIZE
+    );
+
+    if (invalidFiles.length > 0) {
+      alert(`Some files are invalid. Please ensure all files are PDF, JPG, PNG, or DOC and under 10MB.`);
+      return;
+    }
+
     setUploading(true);
-    const uploadedUrls = [];
+    const uploadedFiles = [];
 
     for (const file of files) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      uploadedUrls.push({ name: file.name, url: file_url });
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        uploadedFiles.push({ 
+          name: file.name, 
+          url: file_url,
+          type: file.type
+        });
+      } catch (error) {
+        console.error("Error uploading file:", error);
+      }
     }
 
     setFormData(prev => ({
       ...prev,
-      attachments: [...prev.attachments, ...uploadedUrls]
+      attachments: [...prev.attachments, ...uploadedFiles]
     }));
     setUploading(false);
+    e.target.value = null;
   };
 
   const removeAttachment = (index) => {
@@ -119,38 +231,114 @@ export default function Apply() {
     }));
   };
 
-  const handleSubmit = async (saveAsDraft = false) => {
+  const validateForm = () => {
+    const fields = [
+      "student_full_name",
+      "student_email",
+      "requested_amount",
+      "intended_use_category",
+      "intended_use_description",
+      "justification_paragraph"
+    ];
+
+    fields.forEach(field => validateField(field, formData[field]));
+
+    return Object.keys(errors).length === 0;
+  };
+
+  const generateRequestId = async () => {
+    const year = new Date().getFullYear();
+    
+    // Get count of requests this year to generate sequence
+    const allRequests = await base44.entities.FundRequest.list();
+    const thisYearRequests = allRequests.filter(r => {
+      const requestYear = new Date(r.created_date).getFullYear();
+      return requestYear === year;
+    });
+    
+    const sequence = (thisYearRequests.length + 1).toString().padStart(6, '0');
+    return `FUND-${year}-${sequence}`;
+  };
+
+  const handleSaveAsDraft = async () => {
     setSubmitting(true);
 
+    const requestId = await generateRequestId();
+
     const requestData = {
+      request_id: requestId,
       fund_id: selectedFund.id,
       fund_name: selectedFund.fund_name,
+      fund_max_amount: selectedFund.max_request_amount || null,
       student_user_id: user.id,
-      student_full_name: user.full_name,
-      student_email: user.email,
-      student_phone: user.phone || "",
+      student_full_name: formData.student_full_name,
+      student_email: formData.student_email,
+      student_phone: formData.student_phone || "",
+      requested_amount: parseFloat(formData.requested_amount) || 0,
+      intended_use_category: formData.intended_use_category,
+      intended_use_description: formData.intended_use_description,
+      justification_paragraph: formData.justification_paragraph,
+      attachments: formData.attachments,
+      status: "Draft",
+      locked: false
+    };
+
+    await base44.entities.FundRequest.create(requestData);
+
+    navigate(createPageUrl("MyRequests"));
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      alert("Please fix the errors in the form before submitting.");
+      return;
+    }
+
+    setShowConfirmModal(true);
+  };
+
+  const confirmSubmit = async () => {
+    setSubmitting(true);
+
+    const requestId = await generateRequestId();
+
+    const requestData = {
+      request_id: requestId,
+      fund_id: selectedFund.id,
+      fund_name: selectedFund.fund_name,
+      fund_max_amount: selectedFund.max_request_amount || null,
+      student_user_id: user.id,
+      student_full_name: formData.student_full_name,
+      student_email: formData.student_email,
+      student_phone: formData.student_phone || "",
       requested_amount: parseFloat(formData.requested_amount),
       intended_use_category: formData.intended_use_category,
       intended_use_description: formData.intended_use_description,
       justification_paragraph: formData.justification_paragraph,
-      attachments: formData.attachments.map(a => a.url),
-      status: saveAsDraft ? "Draft" : "Submitted",
-      submitted_at: saveAsDraft ? null : new Date().toISOString()
+      attachments: formData.attachments,
+      status: "Submitted",
+      submitted_at: new Date().toISOString(),
+      locked: true
     };
 
-    await base44.entities.FundRequest.create(requestData);
+    const newRequest = await base44.entities.FundRequest.create(requestData);
 
     // Create audit log
     await base44.entities.AuditLog.create({
       actor_user_id: user.id,
       actor_name: user.full_name,
-      action_type: saveAsDraft ? "REQUEST_DRAFTED" : "REQUEST_SUBMITTED",
+      action_type: "REQUEST_SUBMITTED",
       entity_type: "FundRequest",
-      entity_id: selectedFund.id,
-      details: JSON.stringify({ fund_name: selectedFund.fund_name, amount: formData.requested_amount })
+      entity_id: newRequest.id,
+      details: JSON.stringify({ 
+        request_id: requestId,
+        fund_name: selectedFund.fund_name, 
+        amount: formData.requested_amount 
+      })
     });
 
-    navigate(createPageUrl("MyRequests"));
+    setShowConfirmModal(false);
+    navigate(createPageUrl(`RequestDetail?id=${newRequest.id}`));
   };
 
   if (!user) {
@@ -161,155 +349,258 @@ export default function Apply() {
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto">
-      <PageHeader
-        title="Apply for Fund"
-        description="Submit a request for financial assistance"
-      />
+  // If no fund selected, show fund selector
+  if (!selectedFund) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <PageHeader
+          title="Apply for Fund"
+          description="Select a fund to begin your application"
+        />
 
-      {/* Progress Steps */}
-      <div className="mb-8">
-        <div className="flex items-center justify-center gap-4">
-          {[
-            { num: 1, label: "Select Fund" },
-            { num: 2, label: "Request Details" },
-            { num: 3, label: "Review & Submit" }
-          ].map((s, i) => (
-            <React.Fragment key={s.num}>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                    step >= s.num
-                      ? "bg-gradient-to-br from-indigo-600 to-violet-600 text-white"
-                      : "bg-slate-100 text-slate-400"
-                  }`}
-                >
-                  {step > s.num ? <CheckCircle className="w-4 h-4" /> : s.num}
-                </div>
-                <span className={`text-sm font-medium hidden sm:inline ${step >= s.num ? "text-slate-800" : "text-slate-400"}`}>
-                  {s.label}
-                </span>
-              </div>
-              {i < 2 && (
-                <div className={`w-12 h-0.5 ${step > s.num ? "bg-indigo-600" : "bg-slate-200"}`} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-
-      {/* Step 1: Select Fund */}
-      {step === 1 && (
-        <div className="space-y-4">
-          {isLoading ? (
-            <LoadingSpinner className="py-16" />
-          ) : funds.length === 0 ? (
-            <EmptyState
-              icon={Wallet}
-              title="No Active Funds"
-              description="There are no funds currently accepting applications. Please check back later."
-            />
-          ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {funds.map((fund) => (
+        {isLoading ? (
+          <LoadingSpinner className="py-16" />
+        ) : funds.length === 0 ? (
+          <EmptyState
+            icon={Wallet}
+            title="No Active Funds"
+            description="There are no funds currently accepting applications. Please check back later."
+          />
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {funds.map((fund) => {
+              const isExpiringSoon = fund.end_date && 
+                new Date(fund.end_date) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+              
+              return (
                 <Card
                   key={fund.id}
-                  className={`cursor-pointer transition-all hover:shadow-lg ${
-                    selectedFund?.id === fund.id
-                      ? "ring-2 ring-indigo-600 border-indigo-600"
-                      : "hover:border-indigo-200"
-                  }`}
+                  className="cursor-pointer transition-all hover:shadow-lg hover:border-indigo-200 bg-white/70 backdrop-blur-sm"
                   onClick={() => setSelectedFund(fund)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{fund.fund_name}</CardTitle>
-                        <CardDescription className="mt-1">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg mb-2">{fund.fund_name}</CardTitle>
+                        <CardDescription className="text-sm">
                           {fund.description || "No description available"}
                         </CardDescription>
                       </div>
-                      {selectedFund?.id === fund.id && (
-                        <div className="w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                          <CheckCircle className="w-4 h-4 text-white" />
-                        </div>
-                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-3">
                       {fund.eligibility_notes && (
-                        <div className="flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5" />
-                          <span className="text-slate-600">{fund.eligibility_notes}</span>
-                        </div>
+                        <Alert className="bg-blue-50 border-blue-200">
+                          <AlertCircle className="w-4 h-4 text-blue-600" />
+                          <AlertDescription className="text-blue-800 text-sm">
+                            {fund.eligibility_notes}
+                          </AlertDescription>
+                        </Alert>
                       )}
-                      <div className="flex items-center gap-4 text-slate-500 pt-2 border-t">
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" />
-                          <span>${fund.total_budget?.toLocaleString()}</span>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4 text-slate-400" />
+                          <div>
+                            <p className="text-slate-500 text-xs">Total Budget</p>
+                            <p className="font-semibold">${fund.total_budget?.toLocaleString()}</p>
+                          </div>
                         </div>
+                        
+                        {fund.max_request_amount && (
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-amber-500" />
+                            <div>
+                              <p className="text-slate-500 text-xs">Max Request</p>
+                              <p className="font-semibold text-amber-600">
+                                ${fund.max_request_amount?.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
                         {fund.end_date && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>Ends {format(new Date(fund.end_date), "MMM d")}</span>
+                          <div className="flex items-center gap-2 col-span-2">
+                            <Calendar className={`w-4 h-4 ${isExpiringSoon ? "text-red-500" : "text-slate-400"}`} />
+                            <div>
+                              <p className="text-slate-500 text-xs">Deadline</p>
+                              <p className={`font-semibold text-sm ${isExpiringSoon ? "text-red-600" : ""}`}>
+                                {format(new Date(fund.end_date), "MMMM d, yyyy")}
+                                {isExpiringSoon && " (Expiring Soon!)"}
+                              </p>
+                            </div>
                           </div>
                         )}
                       </div>
+
+                      <Button className="w-full mt-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
+                        Apply Now
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
 
-          {selectedFund && (
-            <div className="flex justify-end pt-4">
-              <Button
-                onClick={() => setStep(2)}
-                className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
-              >
-                Continue <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+  // Application Form
+  const isFormValid = 
+    formData.student_full_name &&
+    formData.student_email &&
+    formData.requested_amount &&
+    parseFloat(formData.requested_amount) > 0 &&
+    formData.intended_use_category &&
+    formData.intended_use_description?.length >= 30 &&
+    formData.justification_paragraph?.length >= 100 &&
+    Object.keys(errors).length === 0;
 
-      {/* Step 2: Request Details */}
-      {step === 2 && (
-        <Card className="bg-white/70 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Request Details</CardTitle>
-            <CardDescription>
-              Applying for: <span className="font-medium text-slate-800">{selectedFund?.fund_name}</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" onClick={() => setSelectedFund(null)}>
+          ← Back to Funds
+        </Button>
+      </div>
+
+      <PageHeader
+        title={`Apply: ${selectedFund.fund_name}`}
+        description="Complete the application form below"
+      />
+
+      {/* Fund Info Banner */}
+      <Alert className="mb-6 bg-indigo-50 border-indigo-200">
+        <Wallet className="w-4 h-4 text-indigo-600" />
+        <AlertDescription className="text-indigo-900">
+          <div className="flex items-center justify-between">
+            <span>
+              <strong>Budget:</strong> ${selectedFund.total_budget?.toLocaleString()}
+              {selectedFund.max_request_amount && (
+                <> • <strong>Max Request:</strong> ${selectedFund.max_request_amount?.toLocaleString()}</>
+              )}
+            </span>
+            {selectedFund.end_date && (
+              <span className="text-sm">
+                <strong>Deadline:</strong> {format(new Date(selectedFund.end_date), "MMM d, yyyy")}
+              </span>
+            )}
+          </div>
+        </AlertDescription>
+      </Alert>
+
+      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <CardHeader>
+          <CardTitle>Application Form</CardTitle>
+          <CardDescription>All fields marked with * are required</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Contact Information */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Contact Information
+            </h3>
+            <p className="text-sm text-slate-500">
+              These details can be edited and will be saved as a snapshot with your application.
+            </p>
+            
+            <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">Requested Amount *</Label>
+                <Label htmlFor="fullName">
+                  Full Name * 
+                  {errors.student_full_name && (
+                    <span className="text-red-600 text-xs ml-2">{errors.student_full_name}</span>
+                  )}
+                </Label>
+                <Input
+                  id="fullName"
+                  value={formData.student_full_name}
+                  onChange={(e) => handleInputChange("student_full_name", e.target.value)}
+                  className={errors.student_full_name ? "border-red-500" : ""}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">
+                  Email *
+                  {errors.student_email && (
+                    <span className="text-red-600 text-xs ml-2">{errors.student_email}</span>
+                  )}
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.student_email}
+                  onChange={(e) => handleInputChange("student_email", e.target.value)}
+                  className={errors.student_email ? "border-red-500" : ""}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.student_phone}
+                  onChange={(e) => handleInputChange("student_phone", e.target.value)}
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Request Details */}
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              Request Details
+            </h3>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">
+                  Requested Amount *
+                  {errors.requested_amount && (
+                    <span className="text-red-600 text-xs ml-2">{errors.requested_amount}</span>
+                  )}
+                </Label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input
                     id="amount"
                     type="number"
+                    min="0"
+                    step="0.01"
                     placeholder="0.00"
-                    className="pl-9"
+                    className={`pl-9 ${errors.requested_amount ? "border-red-500" : ""}`}
                     value={formData.requested_amount}
-                    onChange={(e) => setFormData({ ...formData, requested_amount: e.target.value })}
+                    onChange={(e) => handleInputChange("requested_amount", e.target.value)}
                   />
                 </div>
+                {selectedFund.max_request_amount && (
+                  <p className="text-xs text-slate-500">
+                    Maximum allowed: ${selectedFund.max_request_amount.toLocaleString()}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="category">Intended Use Category *</Label>
+                <Label htmlFor="category">
+                  Intended Use Category *
+                  {errors.intended_use_category && (
+                    <span className="text-red-600 text-xs ml-2">{errors.intended_use_category}</span>
+                  )}
+                </Label>
                 <Select
                   value={formData.intended_use_category}
-                  onValueChange={(value) => setFormData({ ...formData, intended_use_category: value })}
+                  onValueChange={(value) => handleInputChange("intended_use_category", value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={errors.intended_use_category ? "border-red-500" : ""}>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -322,175 +613,194 @@ export default function Apply() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="useDescription">How will you use these funds? *</Label>
+              <Label htmlFor="useDescription">
+                How will you use these funds? * (minimum 30 characters)
+                {errors.intended_use_description && (
+                  <span className="text-red-600 text-xs ml-2">{errors.intended_use_description}</span>
+                )}
+              </Label>
               <Textarea
                 id="useDescription"
-                placeholder="Describe specifically how you plan to use these funds..."
+                placeholder="Provide a detailed description of how you plan to use these funds..."
                 rows={4}
                 value={formData.intended_use_description}
-                onChange={(e) => setFormData({ ...formData, intended_use_description: e.target.value })}
+                onChange={(e) => handleInputChange("intended_use_description", e.target.value)}
+                className={errors.intended_use_description ? "border-red-500" : ""}
               />
+              <p className="text-xs text-slate-500">
+                {formData.intended_use_description.length} / 30 characters minimum
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="justification">Justification *</Label>
+              <Label htmlFor="justification">
+                Why do you deserve these funds? * (minimum 100 characters)
+                {errors.justification_paragraph && (
+                  <span className="text-red-600 text-xs ml-2">{errors.justification_paragraph}</span>
+                )}
+              </Label>
               <Textarea
                 id="justification"
-                placeholder="Explain why you need this financial assistance and how it will help you..."
-                rows={4}
+                placeholder="Explain your situation, why you need this assistance, and how it will help you succeed..."
+                rows={6}
                 value={formData.justification_paragraph}
-                onChange={(e) => setFormData({ ...formData, justification_paragraph: e.target.value })}
+                onChange={(e) => handleInputChange("justification_paragraph", e.target.value)}
+                className={errors.justification_paragraph ? "border-red-500" : ""}
               />
+              <p className="text-xs text-slate-500">
+                {formData.justification_paragraph.length} / 100 characters minimum
+              </p>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label>Supporting Documents</Label>
-              <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-300 transition-colors">
-                <input
-                  type="file"
-                  multiple
-                  className="hidden"
-                  id="fileUpload"
-                  onChange={handleFileUpload}
-                />
-                <label htmlFor="fileUpload" className="cursor-pointer">
-                  {uploading ? (
-                    <LoadingSpinner size="sm" className="mx-auto mb-2" />
-                  ) : (
-                    <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                  )}
-                  <p className="text-sm text-slate-600">Click to upload documents</p>
-                  <p className="text-xs text-slate-400 mt-1">PDF, Images, or Documents</p>
-                </label>
-              </div>
+          {/* Attachments */}
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+              <Paperclip className="w-4 h-4" />
+              Supporting Documents (Optional)
+            </h3>
+            <p className="text-sm text-slate-500">
+              Upload any supporting documents (PDF, JPG, PNG, DOC - max 10MB per file)
+            </p>
 
-              {formData.attachments.length > 0 && (
-                <div className="space-y-2 mt-4">
-                  {formData.attachments.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
-                    >
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-indigo-600" />
-                        <span className="text-sm text-slate-700">{file.name}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeAttachment(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-between pt-4">
-              <Button variant="outline" onClick={() => setStep(1)}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Back
-              </Button>
-              <Button
-                onClick={() => setStep(3)}
-                disabled={!formData.requested_amount || !formData.intended_use_category || !formData.intended_use_description || !formData.justification_paragraph}
-                className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
-              >
-                Review <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Review */}
-      {step === 3 && (
-        <Card className="bg-white/70 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Review Your Application</CardTitle>
-            <CardDescription>Please review all information before submitting</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-slate-500">Fund</p>
-                  <p className="font-medium text-slate-800">{selectedFund?.fund_name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Applicant</p>
-                  <p className="font-medium text-slate-800">{user.full_name}</p>
-                  <p className="text-sm text-slate-600">{user.email}</p>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-slate-500">Requested Amount</p>
-                  <p className="font-medium text-2xl text-slate-800">
-                    ${parseFloat(formData.requested_amount).toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Category</p>
-                  <p className="font-medium text-slate-800">{formData.intended_use_category}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-4">
-              <p className="text-sm text-slate-500 mb-2">Intended Use Description</p>
-              <p className="text-slate-700">{formData.intended_use_description}</p>
-            </div>
-
-            <div className="border-t pt-4">
-              <p className="text-sm text-slate-500 mb-2">Justification</p>
-              <p className="text-slate-700">{formData.justification_paragraph}</p>
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-300 transition-colors">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                className="hidden"
+                id="fileUpload"
+                onChange={handleFileUpload}
+                disabled={uploading}
+              />
+              <label htmlFor="fileUpload" className="cursor-pointer">
+                {uploading ? (
+                  <LoadingSpinner size="sm" className="mx-auto mb-2" />
+                ) : (
+                  <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                )}
+                <p className="text-sm text-slate-600">
+                  {uploading ? "Uploading..." : "Click to upload documents"}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  PDF, JPG, PNG, DOC • Max 10MB per file
+                </p>
+              </label>
             </div>
 
             {formData.attachments.length > 0 && (
-              <div className="border-t pt-4">
-                <p className="text-sm text-slate-500 mb-2">Attachments ({formData.attachments.length})</p>
-                <div className="flex flex-wrap gap-2">
-                  {formData.attachments.map((file, index) => (
-                    <div key={index} className="px-3 py-1 bg-slate-100 rounded-lg text-sm">
-                      {file.name}
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-700">
+                  Uploaded Files ({formData.attachments.length})
+                </p>
+                {formData.attachments.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <File className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                      <span className="text-sm text-slate-700 truncate">{file.name}</span>
                     </div>
-                  ))}
-                </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAttachment(index)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
+          </div>
 
-            <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4 border-t">
-              <Button variant="outline" onClick={() => setStep(2)}>
-                <ArrowLeft className="w-4 h-4 mr-2" /> Edit
-              </Button>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => handleSubmit(true)}
-                  disabled={submitting}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Save as Draft
-                </Button>
-                <Button
-                  onClick={() => handleSubmit(false)}
-                  disabled={submitting}
-                  className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
-                >
-                  {submitting ? (
-                    <LoadingSpinner size="sm" className="mr-2" />
-                  ) : (
-                    <Send className="w-4 h-4 mr-2" />
-                  )}
-                  Submit Application
-                </Button>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6 border-t">
+            <Button
+              variant="outline"
+              onClick={handleSaveAsDraft}
+              disabled={submitting || !formData.requested_amount}
+              className="order-2 sm:order-1"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save as Draft
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!isFormValid || submitting}
+              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 order-1 sm:order-2"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Submit Application
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Confirmation Modal */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-amber-500" />
+              Confirm Submission
+            </DialogTitle>
+            <DialogDescription>
+              Please review your application before submitting.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Alert className="bg-amber-50 border-amber-200">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-amber-900 text-sm">
+                Once submitted, you will not be able to edit your application unless additional information is requested by a reviewer.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Fund:</span>
+                <span className="font-medium">{selectedFund.fund_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Amount:</span>
+                <span className="font-medium">${parseFloat(formData.requested_amount).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Category:</span>
+                <span className="font-medium">{formData.intended_use_category}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Attachments:</span>
+                <span className="font-medium">{formData.attachments.length} files</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowConfirmModal(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmSubmit}
+              disabled={submitting}
+              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+            >
+              {submitting ? (
+                <LoadingSpinner size="sm" className="mr-2" />
+              ) : (
+                <CheckCircle className="w-4 h-4 mr-2" />
+              )}
+              Confirm & Submit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
