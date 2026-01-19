@@ -328,6 +328,68 @@ export default function Apply() {
 
     const newRequest = await base44.entities.FundRequest.create(requestData);
 
+    // Get routing rules for this fund
+    const rules = await base44.entities.RoutingRule.filter({ 
+      fund_id: selectedFund.id,
+      is_active: true 
+    }, "step_order");
+
+    // Filter rules based on conditions
+    const applicableRules = rules.filter(rule => {
+      const amountMatch = 
+        (!rule.min_amount || parseFloat(formData.requested_amount) >= rule.min_amount) &&
+        (!rule.max_amount || parseFloat(formData.requested_amount) <= rule.max_amount);
+      
+      const categoryMatch = 
+        !rule.applicable_categories || 
+        rule.applicable_categories.length === 0 ||
+        rule.applicable_categories.includes(formData.intended_use_category);
+      
+      return amountMatch && categoryMatch;
+    });
+
+    // Create review records for applicable steps
+    for (const rule of applicableRules) {
+      // Determine reviewers based on assignment type
+      let reviewerIds = [];
+      let reviewerNames = [];
+
+      if (rule.assigned_to_type === "specific_users") {
+        reviewerIds = rule.assigned_user_ids || [];
+        reviewerNames = rule.assigned_user_names || [];
+      } else if (rule.assigned_to_type === "role_queue") {
+        // For role queue, create one review per role (to be picked up by any user with that role)
+        reviewerIds = ["role_" + rule.assigned_role];
+        reviewerNames = [rule.assigned_role + " Queue"];
+      }
+
+      // Create one review record per reviewer or one for the queue
+      if (reviewerIds.length > 0) {
+        for (let i = 0; i < reviewerIds.length; i++) {
+          await base44.entities.Review.create({
+            fund_request_id: newRequest.id,
+            reviewer_user_id: reviewerIds[i],
+            reviewer_name: reviewerNames[i] || "Reviewer",
+            step_name: rule.step_name,
+            step_order: rule.step_order,
+            decision: "Pending",
+            comments: "",
+            permissions: rule.permissions,
+            sla_target_days: rule.sla_target_days
+          });
+        }
+      }
+    }
+
+    // Update request with current step info if there are rules
+    if (applicableRules.length > 0) {
+      await base44.entities.FundRequest.update(newRequest.id, {
+        status: "In Review",
+        current_step: applicableRules[0].step_name,
+        current_step_order: applicableRules[0].step_order
+      });
+    }
+
     // Create audit log
     await base44.entities.AuditLog.create({
       actor_user_id: user.id,
