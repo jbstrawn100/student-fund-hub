@@ -3,52 +3,19 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/shared/PageHeader";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import EmptyState from "@/components/shared/EmptyState";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Settings,
-  Plus,
-  Edit,
-  Trash2,
-  ArrowUp,
-  ArrowDown,
-  GripVertical,
-  User,
-  Users
-} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { GitBranch, Plus, Settings, AlertCircle } from "lucide-react";
+import RuleBuilder from "@/components/rules/RuleBuilder";
 
 export default function Rules() {
-  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [selectedFundId, setSelectedFundId] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [editingRule, setEditingRule] = useState(null);
-  const [formData, setFormData] = useState({
-    step_name: "",
-    reviewer_role: "",
-    assigned_user_id: "",
-    is_active: true
-  });
-  const [submitting, setSubmitting] = useState(false);
+  const [showBuilder, setShowBuilder] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadUser();
@@ -61,110 +28,16 @@ export default function Rules() {
 
   const { data: funds = [] } = useQuery({
     queryKey: ["allFunds"],
-    queryFn: () => base44.entities.Fund.list(),
+    queryFn: () => base44.entities.Fund.list("-created_date"),
   });
 
-  const { data: allRules = [], isLoading } = useQuery({
-    queryKey: ["routingRules"],
-    queryFn: () => base44.entities.RoutingRule.list("step_order"),
+  const { data: rules = [] } = useQuery({
+    queryKey: ["fundRules", selectedFundId],
+    queryFn: () => base44.entities.RoutingRule.filter({ fund_id: selectedFundId }, "step_order"),
+    enabled: !!selectedFundId,
   });
-
-  const { data: users = [] } = useQuery({
-    queryKey: ["allUsers"],
-    queryFn: () => base44.entities.User.list(),
-  });
-
-  const rules = selectedFundId
-    ? allRules.filter(r => r.fund_id === selectedFundId)
-    : allRules;
 
   const selectedFund = funds.find(f => f.id === selectedFundId);
-  const staffUsers = users.filter(u => 
-    ["reviewer", "approver", "fund_manager", "admin"].includes(u.app_role)
-  );
-
-  const openCreateModal = () => {
-    if (!selectedFundId) {
-      alert("Please select a fund first");
-      return;
-    }
-    setEditingRule(null);
-    setFormData({
-      step_name: "",
-      reviewer_role: "",
-      assigned_user_id: "",
-      is_active: true
-    });
-    setShowModal(true);
-  };
-
-  const openEditModal = (rule) => {
-    setEditingRule(rule);
-    setFormData({
-      step_name: rule.step_name,
-      reviewer_role: rule.reviewer_role,
-      assigned_user_id: rule.assigned_user_id || "",
-      is_active: rule.is_active
-    });
-    setShowModal(true);
-  };
-
-  const handleSubmit = async () => {
-    setSubmitting(true);
-
-    const assignedUser = staffUsers.find(u => u.id === formData.assigned_user_id);
-    
-    const ruleData = {
-      fund_id: selectedFundId,
-      fund_name: selectedFund?.fund_name,
-      step_name: formData.step_name,
-      reviewer_role: formData.reviewer_role,
-      assigned_user_id: formData.assigned_user_id || null,
-      assigned_user_name: assignedUser?.full_name || null,
-      is_active: formData.is_active,
-      step_order: editingRule 
-        ? editingRule.step_order 
-        : rules.length + 1
-    };
-
-    if (editingRule) {
-      await base44.entities.RoutingRule.update(editingRule.id, ruleData);
-    } else {
-      await base44.entities.RoutingRule.create(ruleData);
-    }
-
-    queryClient.invalidateQueries(["routingRules"]);
-    setShowModal(false);
-    setSubmitting(false);
-  };
-
-  const handleDelete = async (rule) => {
-    if (!confirm("Are you sure you want to delete this routing rule?")) return;
-    await base44.entities.RoutingRule.delete(rule.id);
-    queryClient.invalidateQueries(["routingRules"]);
-  };
-
-  const handleToggleActive = async (rule) => {
-    await base44.entities.RoutingRule.update(rule.id, { is_active: !rule.is_active });
-    queryClient.invalidateQueries(["routingRules"]);
-  };
-
-  const moveRule = async (rule, direction) => {
-    const fundRules = rules.filter(r => r.fund_id === rule.fund_id).sort((a, b) => a.step_order - b.step_order);
-    const currentIndex = fundRules.findIndex(r => r.id === rule.id);
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-
-    if (targetIndex < 0 || targetIndex >= fundRules.length) return;
-
-    const targetRule = fundRules[targetIndex];
-    
-    await Promise.all([
-      base44.entities.RoutingRule.update(rule.id, { step_order: targetRule.step_order }),
-      base44.entities.RoutingRule.update(targetRule.id, { step_order: rule.step_order })
-    ]);
-
-    queryClient.invalidateQueries(["routingRules"]);
-  };
 
   if (!user) {
     return (
@@ -175,20 +48,23 @@ export default function Rules() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <PageHeader
         title="Routing Rules"
-        description="Configure approval workflows for each fund"
+        description="Configure review workflows and approval routing for funds"
       />
 
       {/* Fund Selector */}
       <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
             <div className="flex-1">
+              <label className="text-sm font-medium text-slate-700 mb-2 block">
+                Select Fund
+              </label>
               <Select value={selectedFundId} onValueChange={setSelectedFundId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a fund to manage rules..." />
+                  <SelectValue placeholder="Choose a fund to configure..." />
                 </SelectTrigger>
                 <SelectContent>
                   {funds.map((fund) => (
@@ -199,218 +75,161 @@ export default function Rules() {
                 </SelectContent>
               </Select>
             </div>
-            <Button 
-              onClick={openCreateModal} 
-              disabled={!selectedFundId}
-              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Step
-            </Button>
+            {selectedFundId && (
+              <Button
+                onClick={() => setShowBuilder(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 mt-6"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Step
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Rules List */}
-      {!selectedFundId ? (
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
-          <CardContent className="py-16">
-            <EmptyState
-              icon={Settings}
-              title="Select a Fund"
-              description="Choose a fund above to view and manage its routing rules"
-            />
-          </CardContent>
-        </Card>
-      ) : isLoading ? (
-        <LoadingSpinner className="py-16" />
-      ) : rules.length === 0 ? (
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
-          <CardContent className="py-16">
-            <EmptyState
-              icon={Settings}
-              title="No Routing Rules"
-              description="Add workflow steps to define how requests are reviewed and approved"
-              action={
-                <Button onClick={openCreateModal} className="mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add First Step
-                </Button>
-              }
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
-          <CardHeader>
-            <CardTitle>Workflow Steps for {selectedFund?.fund_name}</CardTitle>
-            <CardDescription>
-              Requests will be routed through these steps in order
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {rules
-                .sort((a, b) => a.step_order - b.step_order)
-                .map((rule, index) => (
-                  <div
-                    key={rule.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
-                      rule.is_active 
-                        ? "bg-white border-slate-200" 
-                        : "bg-slate-50 border-slate-200 opacity-60"
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        disabled={index === 0}
-                        onClick={() => moveRule(rule, "up")}
-                      >
-                        <ArrowUp className="w-4 h-4" />
-                      </Button>
-                      <span className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-semibold text-sm">
-                        {index + 1}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        disabled={index === rules.length - 1}
-                        onClick={() => moveRule(rule, "down")}
-                      >
-                        <ArrowDown className="w-4 h-4" />
-                      </Button>
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-slate-800">{rule.step_name}</h4>
-                        {!rule.is_active && (
-                          <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded">
-                            Disabled
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-slate-500">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span className="capitalize">{rule.reviewer_role}</span>
+      {selectedFundId && (
+        <>
+          {/* Rules Overview */}
+          {rules.length === 0 ? (
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardContent className="py-16">
+                <div className="text-center">
+                  <GitBranch className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">
+                    No Routing Rules Configured
+                  </h3>
+                  <p className="text-slate-500 mb-6">
+                    Set up review steps to define the approval workflow for {selectedFund?.fund_name}
+                  </p>
+                  <Button onClick={() => setShowBuilder(true)} className="bg-indigo-600 hover:bg-indigo-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create First Step
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GitBranch className="w-5 h-5" />
+                  Review Workflow for {selectedFund?.fund_name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {rules.map((rule, index) => (
+                  <div key={rule.id} className="relative">
+                    {/* Step Card */}
+                    <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                      {/* Step Number */}
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
+                          {rule.step_order}
                         </div>
-                        {rule.assigned_user_name && (
-                          <div className="flex items-center gap-1">
-                            <User className="w-4 h-4" />
-                            <span>{rule.assigned_user_name}</span>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Step Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-slate-800">{rule.step_name}</h4>
+                          <Badge variant={rule.permissions === "approve_deny" ? "default" : "secondary"}>
+                            {rule.permissions === "approve_deny" ? "Can Approve/Deny" : "Recommend Only"}
+                          </Badge>
+                          {!rule.is_active && <Badge variant="outline">Inactive</Badge>}
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-slate-500">Assignment:</span>
+                            <p className="font-medium">
+                              {rule.assigned_to_type === "specific_users" && 
+                                `Specific Users: ${rule.assigned_user_names?.join(", ") || "None"}`}
+                              {rule.assigned_to_type === "role_queue" && 
+                                `Role Queue: ${rule.assigned_role}`}
+                              {rule.assigned_to_type === "by_category" && 
+                                "By Category"}
+                            </p>
+                          </div>
+
+                          {(rule.min_amount || rule.max_amount) && (
+                            <div>
+                              <span className="text-slate-500">Amount Range:</span>
+                              <p className="font-medium">
+                                {rule.min_amount && `≥ $${rule.min_amount.toLocaleString()}`}
+                                {rule.min_amount && rule.max_amount && " - "}
+                                {rule.max_amount && `≤ $${rule.max_amount.toLocaleString()}`}
+                              </p>
+                            </div>
+                          )}
+
+                          {rule.applicable_categories && rule.applicable_categories.length > 0 && (
+                            <div>
+                              <span className="text-slate-500">Categories:</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {rule.applicable_categories.map(cat => (
+                                  <Badge key={cat} variant="outline" className="text-xs">
+                                    {cat}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {rule.sla_target_days && (
+                            <div>
+                              <span className="text-slate-500">SLA Target:</span>
+                              <p className="font-medium">{rule.sla_target_days} days</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowBuilder(rule)}
+                      >
+                        <Settings className="w-4 h-4" />
+                      </Button>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={rule.is_active}
-                        onCheckedChange={() => handleToggleActive(rule)}
-                      />
-                      <Button variant="ghost" size="sm" onClick={() => openEditModal(rule)}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="text-red-600 hover:text-red-700"
-                        onClick={() => handleDelete(rule)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    {/* Connector Arrow */}
+                    {index < rules.length - 1 && (
+                      <div className="flex justify-center py-2">
+                        <div className="w-px h-6 bg-slate-300"></div>
+                      </div>
+                    )}
                   </div>
                 ))}
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Info Alert */}
+          <Alert className="bg-blue-50 border-blue-200">
+            <AlertCircle className="w-4 h-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 text-sm">
+              <strong>How it works:</strong> When a student submits a request, the system evaluates all active rules based on the requested amount and category. Matching steps are assigned in order, and reviewers can only act on their assigned step once the previous step is complete.
+            </AlertDescription>
+          </Alert>
+        </>
       )}
 
-      {/* Create/Edit Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingRule ? "Edit Routing Step" : "Add Routing Step"}</DialogTitle>
-            <DialogDescription>
-              Configure who should review requests at this step.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Step Name *</Label>
-              <Input
-                value={formData.step_name}
-                onChange={(e) => setFormData({ ...formData, step_name: e.target.value })}
-                placeholder="e.g., Initial Review, Final Approval"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Reviewer Role *</Label>
-              <Select
-                value={formData.reviewer_role}
-                onValueChange={(value) => setFormData({ ...formData, reviewer_role: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="reviewer">Reviewer</SelectItem>
-                  <SelectItem value="approver">Approver</SelectItem>
-                  <SelectItem value="fund_manager">Fund Manager</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Assign to Specific User (Optional)</Label>
-              <Select
-                value={formData.assigned_user_id}
-                onValueChange={(value) => setFormData({ ...formData, assigned_user_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Any user with this role..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={null}>Any user with this role</SelectItem>
-                  {staffUsers
-                    .filter(u => !formData.reviewer_role || u.app_role === formData.reviewer_role)
-                    .map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.full_name} ({u.email})
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between">
-              <Label>Active</Label>
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={!formData.step_name || !formData.reviewer_role || submitting}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {submitting ? <LoadingSpinner size="sm" className="mr-2" /> : null}
-              {editingRule ? "Save Changes" : "Add Step"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Rule Builder Modal/Sheet */}
+      {showBuilder && (
+        <RuleBuilder
+          fundId={selectedFundId}
+          fundName={selectedFund?.fund_name}
+          rule={typeof showBuilder === "object" ? showBuilder : null}
+          existingSteps={rules.length}
+          onClose={() => {
+            setShowBuilder(false);
+            queryClient.invalidateQueries(["fundRules", selectedFundId]);
+          }}
+        />
+      )}
     </div>
   );
 }
