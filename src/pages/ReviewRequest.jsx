@@ -79,7 +79,7 @@ export default function ReviewRequest() {
 
   const { data: reviews = [] } = useQuery({
     queryKey: ["reviews", requestId],
-    queryFn: () => base44.entities.Review.filter({ fund_request_id: requestId }, "-created_date"),
+    queryFn: () => base44.entities.Review.filter({ fund_request_id: requestId }, "step_order"),
     enabled: !!requestId,
   });
 
@@ -96,10 +96,24 @@ export default function ReviewRequest() {
   });
 
   const submitReview = async () => {
+    if (!currentReview) return;
+
+    // Require comment for Deny decision
+    if (decision === "Denied" && !reviewComments.trim()) {
+      alert("Please provide a reason for denying this request.");
+      return;
+    }
+
+    // Require message for Needs Info
+    if (decision === "Needs Info" && !reviewComments.trim()) {
+      alert("Please provide details about what information is needed.");
+      return;
+    }
+
     setSubmitting(true);
 
-    // Check budget before approving
-    if (decision === "Approved" && fund) {
+    // Check budget before approving (only for final approval)
+    if (decision === "Approved" && fund && isFinalStep) {
       const approvedRequests = await base44.entities.FundRequest.filter({ 
         fund_id: fund.id, 
         status: "Approved" 
@@ -125,26 +139,57 @@ export default function ReviewRequest() {
       }
     }
 
-    const newStatus = decision === "Approved" ? "Approved" 
-                    : decision === "Denied" ? "Denied"
-                    : decision === "Needs Info" ? "Needs Info"
-                    : "In Review";
-
-    // Create review record
-    await base44.entities.Review.create({
-      fund_request_id: requestId,
-      reviewer_user_id: user.id,
-      reviewer_name: user.full_name,
-      step_name: `Review by ${user.app_role}`,
-      decision: decision,
+    // Update current review record
+    await base44.entities.Review.update(currentReview.id, {
+      decision: currentReview.permissions === "recommend_only" ? "Recommended" : decision,
       comments: reviewComments,
       decided_at: new Date().toISOString()
     });
 
-    // Update request status and lock if not "Needs Info"
+    let newStatus = request.status;
+    let nextStepOrder = null;
+
+    // Determine new status
+    if (decision === "Denied") {
+      // Any denial stops the workflow
+      newStatus = "Denied";
+    } else if (decision === "Needs Info") {
+      // Needs info pauses the workflow
+      newStatus = "Needs Info";
+    } else if (decision === "Approved" || currentReview.permissions === "recommend_only") {
+      // Check if this is the final step
+      const allStepReviews = reviews.filter(r => r.step_order === currentReview.step_order);
+      const allCompleted = allStepReviews.every(r => 
+        r.id === currentReview.id || ["Approved", "Recommended"].includes(r.decision)
+      );
+
+      if (allCompleted && isFinalStep) {
+        // Final step approved - mark as Approved
+        newStatus = "Approved";
+      } else if (allCompleted) {
+        // Move to next step
+        nextStepOrder = currentReview.step_order + 1;
+        const nextStepReviews = reviews.filter(r => r.step_order === nextStepOrder);
+        if (nextStepReviews.length > 0) {
+          newStatus = "In Review";
+        } else {
+          // No more steps, approve
+          newStatus = "Approved";
+        }
+      } else {
+        // Stay in current step
+        newStatus = "In Review";
+      }
+    }
+
+    // Update request
     await base44.entities.FundRequest.update(requestId, {
       status: newStatus,
-      locked: decision !== "Needs Info"
+      current_step_order: nextStepOrder || request.current_step_order,
+      current_step: nextStepOrder 
+        ? reviews.find(r => r.step_order === nextStepOrder)?.step_name 
+        : request.current_step,
+      locked: decision === "Denied"
     });
 
     // Create audit log
@@ -154,11 +199,17 @@ export default function ReviewRequest() {
       action_type: `REVIEW_${decision.toUpperCase().replace(" ", "_")}`,
       entity_type: "FundRequest",
       entity_id: requestId,
-      details: JSON.stringify({ decision, comments: reviewComments })
+      details: JSON.stringify({ 
+        decision, 
+        comments: reviewComments,
+        step: currentReview.step_name
+      })
     });
 
     queryClient.invalidateQueries(["fundRequest", requestId]);
     queryClient.invalidateQueries(["reviews", requestId]);
+    queryClient.invalidateQueries(["allRequests"]);
+    queryClient.invalidateQueries(["allReviews"]);
     setReviewComments("");
     setDecision("");
     setSubmitting(false);
@@ -235,8 +286,23 @@ export default function ReviewRequest() {
     );
   }
 
-  const canReview = ["Submitted", "In Review"].includes(request.status);
+  // Check if current user can review this request
+  const currentReview = reviews.find(r => 
+    (r.reviewer_user_id === user.id || r.reviewer_user_id === `role_${user.app_role}`) &&
+    r.decision === "Pending" &&
+    r.step_order === request.current_step_order
+  );
+
+  const canReview = currentReview && ["Submitted", "In Review", "Needs Info"].includes(request.status);
+  
+  // Check if this is the final step
+  const maxStepOrder = Math.max(...reviews.map(r => r.step_order || 0), 0);
+  const isFinalStep = currentReview?.step_order === maxStepOrder;
+  
   const canDisburse = request.status === "Approved" && ["fund_manager", "admin"].includes(user.app_role);
+
+  // Get internal comments (reviews with comments)
+  const internalComments = reviews.filter(r => r.comments && r.comments.trim());
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -335,46 +401,69 @@ export default function ReviewRequest() {
             </CardContent>
           </Card>
 
-          {/* Activity / Reviews */}
+          {/* Review Workflow */}
           <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
             <CardHeader>
-              <CardTitle className="text-lg">Review History</CardTitle>
+              <CardTitle className="text-lg">Review Workflow</CardTitle>
             </CardHeader>
             <CardContent>
               {reviews.length === 0 ? (
-                <p className="text-slate-500 text-center py-4">No reviews yet</p>
+                <p className="text-slate-500 text-center py-4">No workflow configured</p>
               ) : (
                 <div className="space-y-4">
-                  {reviews.map((review) => {
+                  {reviews.map((review, index) => {
                     const decisionColors = {
                       Approved: "text-emerald-600 bg-emerald-50 border-emerald-200",
+                      Recommended: "text-indigo-600 bg-indigo-50 border-indigo-200",
                       Denied: "text-red-600 bg-red-50 border-red-200",
                       "Needs Info": "text-amber-600 bg-amber-50 border-amber-200",
-                      Pending: "text-blue-600 bg-blue-50 border-blue-200"
+                      Pending: "text-slate-600 bg-slate-50 border-slate-200"
                     };
-                    const DecisionIcon = review.decision === "Approved" ? CheckCircle
+                    const DecisionIcon = review.decision === "Approved" || review.decision === "Recommended" ? CheckCircle
                                        : review.decision === "Denied" ? XCircle
                                        : review.decision === "Needs Info" ? AlertCircle
                                        : Clock;
+                    
+                    const isCurrentStep = review.step_order === request.current_step_order;
+                    
                     return (
-                      <div key={review.id} className={`p-4 rounded-xl border ${decisionColors[review.decision]}`}>
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white">
-                            <DecisionIcon className="w-5 h-5" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold">{review.reviewer_name}</span>
-                              <span className="text-sm opacity-60">{review.step_name}</span>
+                      <div key={review.id}>
+                        <div className={`p-4 rounded-xl border ${decisionColors[review.decision]} ${isCurrentStep ? "ring-2 ring-offset-2 ring-indigo-400" : ""}`}>
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white flex-shrink-0">
+                              <DecisionIcon className="w-5 h-5" />
                             </div>
-                            <p className="text-sm opacity-60 mb-2">
-                              {format(new Date(review.created_date), "MMM d, yyyy 'at' h:mm a")}
-                            </p>
-                            {review.comments && (
-                              <p className="bg-white/50 p-3 rounded-lg">{review.comments}</p>
-                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="font-semibold">Step {review.step_order}: {review.step_name}</span>
+                                {review.permissions === "recommend_only" && (
+                                  <Badge variant="outline" className="text-xs">Recommend Only</Badge>
+                                )}
+                                {isCurrentStep && review.decision === "Pending" && (
+                                  <Badge className="bg-indigo-600 text-white text-xs">Active</Badge>
+                                )}
+                              </div>
+                              <p className="text-sm opacity-60 mb-1">
+                                {review.reviewer_name}
+                                {review.decided_at && ` • ${format(new Date(review.decided_at), "MMM d, yyyy 'at' h:mm a")}`}
+                              </p>
+                              <p className="text-sm font-medium mb-2">
+                                Decision: {review.decision}
+                              </p>
+                              {review.comments && (
+                                <div className="bg-white/50 p-3 rounded-lg">
+                                  <p className="text-sm font-medium mb-1">Comments:</p>
+                                  <p className="text-sm">{review.comments}</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        {index < reviews.length - 1 && (
+                          <div className="flex justify-center py-2">
+                            <div className="w-px h-4 bg-slate-300"></div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -382,50 +471,114 @@ export default function ReviewRequest() {
               )}
             </CardContent>
           </Card>
+
+          {/* Internal Comments Thread */}
+          {internalComments.length > 0 && (
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Internal Discussion
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {internalComments.map((comment) => (
+                    <div key={comment.id} className="p-3 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">{comment.reviewer_name}</span>
+                        <span className="text-xs text-slate-500">
+                          {format(new Date(comment.decided_at || comment.created_date), "MMM d 'at' h:mm a")}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-700">{comment.comments}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Review Action */}
-          {canReview && (
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          {canReview && currentReview && (
+            <Card className="bg-indigo-50 border-indigo-200">
               <CardHeader>
-                <CardTitle className="text-lg">Submit Review</CardTitle>
+                <CardTitle className="text-lg text-indigo-800">
+                  {currentReview.permissions === "recommend_only" ? "Submit Recommendation" : "Submit Review"}
+                </CardTitle>
+                <p className="text-sm text-indigo-600 mt-1">
+                  Step {currentReview.step_order}: {currentReview.step_name}
+                  {isFinalStep && " (Final Decision)"}
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Decision</Label>
+                  <Label>Decision *</Label>
                   <Select value={decision} onValueChange={setDecision}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select decision" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Approved">
-                        <span className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-emerald-600" /> Approve
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="Denied">
-                        <span className="flex items-center gap-2">
-                          <XCircle className="w-4 h-4 text-red-600" /> Deny
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="Needs Info">
-                        <span className="flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 text-amber-600" /> Request More Info
-                        </span>
-                      </SelectItem>
+                      {currentReview.permissions === "approve_deny" && (
+                        <>
+                          <SelectItem value="Approved">
+                            <span className="flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-emerald-600" /> Approve
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="Denied">
+                            <span className="flex items-center gap-2">
+                              <XCircle className="w-4 h-4 text-red-600" /> Deny
+                            </span>
+                          </SelectItem>
+                          <SelectItem value="Needs Info">
+                            <span className="flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-amber-600" /> Request More Info
+                            </span>
+                          </SelectItem>
+                        </>
+                      )}
+                      {currentReview.permissions === "recommend_only" && (
+                        <SelectItem value="Approved">
+                          <span className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-indigo-600" /> Recommend
+                          </span>
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Comments</Label>
+                  <Label>
+                    {decision === "Needs Info" ? "Message to Student *" : 
+                     decision === "Denied" ? "Comments (Required) *" : 
+                     "Comments (Internal)"}
+                  </Label>
                   <Textarea
-                    placeholder="Add your review comments..."
+                    placeholder={
+                      decision === "Needs Info" 
+                        ? "Explain what additional information is needed..." 
+                        : decision === "Denied"
+                        ? "Provide reason for denial..."
+                        : "Add your review comments..."
+                    }
                     rows={4}
                     value={reviewComments}
                     onChange={(e) => setReviewComments(e.target.value)}
                   />
+                  {decision === "Needs Info" && (
+                    <p className="text-xs text-amber-700">
+                      This message will be visible to the student and will unlock their application for editing.
+                    </p>
+                  )}
+                  {decision === "Denied" && (
+                    <p className="text-xs text-red-700">
+                      A reason is required when denying a request.
+                    </p>
+                  )}
                 </div>
                 <Button
                   onClick={submitReview}
@@ -438,7 +591,7 @@ export default function ReviewRequest() {
                   }`}
                 >
                   {submitting ? <LoadingSpinner size="sm" className="mr-2" /> : <Send className="w-4 h-4 mr-2" />}
-                  Submit Review
+                  {currentReview.permissions === "recommend_only" ? "Submit Recommendation" : "Submit Decision"}
                 </Button>
               </CardContent>
             </Card>
