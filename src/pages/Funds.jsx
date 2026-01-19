@@ -1,30 +1,17 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import PageHeader from "@/components/shared/PageHeader";
 import StatusBadge from "@/components/shared/StatusBadge";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import EmptyState from "@/components/shared/EmptyState";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -34,41 +21,27 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Wallet,
-  Plus,
-  Edit,
-  Trash2,
-  DollarSign,
-  Calendar,
-  Users,
-  Search,
-  MoreHorizontal,
-  Archive
-} from "lucide-react";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
+import {
+  Wallet,
+  Plus,
+  Search,
+  MoreHorizontal,
+  Eye,
+  Archive,
+  Users,
+  TrendingDown,
+  DollarSign
+} from "lucide-react";
 
 export default function Funds() {
-  const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showModal, setShowModal] = useState(false);
-  const [editingFund, setEditingFund] = useState(null);
-  const [formData, setFormData] = useState({
-    fund_name: "",
-    description: "",
-    eligibility_notes: "",
-    start_date: "",
-    end_date: "",
-    total_budget: "",
-    status: "active"
-  });
-  const [submitting, setSubmitting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("active");
 
   useEffect(() => {
     loadUser();
@@ -89,99 +62,34 @@ export default function Funds() {
     queryFn: () => base44.entities.FundRequest.list(),
   });
 
-  const filteredFunds = funds.filter((fund) =>
-    fund.fund_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    fund.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { data: disbursements = [] } = useQuery({
+    queryKey: ["allDisbursements"],
+    queryFn: () => base44.entities.Disbursement.list(),
+  });
 
-  const getRequestCount = (fundId) => {
-    return requests.filter(r => r.fund_id === fundId).length;
+  const calculateBudgetStats = (fundId) => {
+    const fundRequests = requests.filter(r => r.fund_id === fundId);
+    const fundDisbursements = disbursements.filter(d => d.fund_id === fundId);
+    
+    const paid = fundDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0);
+    const approved = fundRequests
+      .filter(r => r.status === "Approved")
+      .reduce((sum, r) => sum + (r.requested_amount || 0), 0);
+    
+    return { paid, approved };
   };
 
-  const getTotalDisbursed = (fundId) => {
-    const fund = funds.find(f => f.id === fundId);
-    if (!fund) return 0;
-    return (fund.total_budget || 0) - (fund.remaining_budget || fund.total_budget || 0);
-  };
+  const filteredFunds = funds.filter((fund) => {
+    const matchesSearch = fund.fund_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || fund.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-  const openCreateModal = () => {
-    setEditingFund(null);
-    setFormData({
-      fund_name: "",
-      description: "",
-      eligibility_notes: "",
-      start_date: "",
-      end_date: "",
-      total_budget: "",
-      status: "active"
-    });
-    setShowModal(true);
-  };
-
-  const openEditModal = (fund) => {
-    setEditingFund(fund);
-    setFormData({
-      fund_name: fund.fund_name,
-      description: fund.description || "",
-      eligibility_notes: fund.eligibility_notes || "",
-      start_date: fund.start_date || "",
-      end_date: fund.end_date || "",
-      total_budget: fund.total_budget?.toString() || "",
-      status: fund.status
-    });
-    setShowModal(true);
-  };
-
-  const handleSubmit = async () => {
-    setSubmitting(true);
-
-    const fundData = {
-      fund_name: formData.fund_name,
-      description: formData.description,
-      eligibility_notes: formData.eligibility_notes,
-      start_date: formData.start_date || null,
-      end_date: formData.end_date || null,
-      total_budget: parseFloat(formData.total_budget),
-      remaining_budget: editingFund 
-        ? editingFund.remaining_budget 
-        : parseFloat(formData.total_budget),
-      status: formData.status,
-      fund_owner_id: user.id,
-      fund_owner_name: user.full_name
-    };
-
-    if (editingFund) {
-      await base44.entities.Fund.update(editingFund.id, fundData);
-    } else {
-      await base44.entities.Fund.create(fundData);
-    }
-
-    // Create audit log
-    await base44.entities.AuditLog.create({
-      actor_user_id: user.id,
-      actor_name: user.full_name,
-      action_type: editingFund ? "FUND_UPDATED" : "FUND_CREATED",
-      entity_type: "Fund",
-      entity_id: editingFund?.id || "new",
-      details: JSON.stringify({ fund_name: formData.fund_name })
-    });
-
-    queryClient.invalidateQueries(["allFunds"]);
-    setShowModal(false);
-    setSubmitting(false);
-  };
-
-  const handleStatusChange = async (fund, newStatus) => {
-    await base44.entities.Fund.update(fund.id, { status: newStatus });
-    queryClient.invalidateQueries(["allFunds"]);
-  };
-
-  const handleDelete = async (fund) => {
-    if (!confirm(`Are you sure you want to delete "${fund.fund_name}"? This action cannot be undone.`)) {
-      return;
-    }
-    await base44.entities.Fund.delete(fund.id);
-    queryClient.invalidateQueries(["allFunds"]);
+  const statusCounts = {
+    all: funds.length,
+    active: funds.filter(f => f.status === "active").length,
+    inactive: funds.filter(f => f.status === "inactive").length,
+    archived: funds.filter(f => f.status === "archived").length,
   };
 
   const canManageFunds = user?.app_role === "fund_manager" || user?.app_role === "admin";
@@ -201,13 +109,33 @@ export default function Funds() {
         description="Create and manage funds for student assistance"
         actions={
           canManageFunds && (
-            <Button onClick={openCreateModal} className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Fund
+            <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
+              <Link to={createPageUrl("CreateFund")}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Fund
+              </Link>
             </Button>
           )
         }
       />
+
+      {/* Status Tabs */}
+      <Tabs value={statusFilter} onValueChange={setStatusFilter}>
+        <TabsList className="bg-white/70 border">
+          <TabsTrigger value="all" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            All ({statusCounts.all})
+          </TabsTrigger>
+          <TabsTrigger value="active" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            Active ({statusCounts.active})
+          </TabsTrigger>
+          <TabsTrigger value="inactive" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white">
+            Inactive ({statusCounts.inactive})
+          </TabsTrigger>
+          <TabsTrigger value="archived" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            Archived ({statusCounts.archived})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Search */}
       <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
@@ -224,148 +152,147 @@ export default function Funds() {
         </CardContent>
       </Card>
 
-      {/* Funds Grid/Table */}
+      {/* Funds Table */}
       {isLoading ? (
         <LoadingSpinner className="py-16" />
       ) : filteredFunds.length === 0 ? (
         <EmptyState
           icon={Wallet}
           title="No Funds Found"
-          description={funds.length === 0 ? "Create your first fund to get started." : "No funds match your search."}
+          description={funds.length === 0 ? "Create your first fund to get started." : "No funds match your filters."}
           action={
             funds.length === 0 && canManageFunds && (
-              <Button onClick={openCreateModal} className="mt-4">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Fund
+              <Button asChild className="mt-4">
+                <Link to={createPageUrl("CreateFund")}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Fund
+                </Link>
               </Button>
             )
           }
         />
       ) : (
-        <>
-          {/* Mobile View - Cards */}
-          <div className="md:hidden space-y-4">
-            {filteredFunds.map((fund) => (
-              <Card key={fund.id} className="bg-white/70 backdrop-blur-sm border-slate-200/50">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{fund.fund_name}</CardTitle>
-                      <CardDescription className="mt-1">{fund.description}</CardDescription>
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
+          {/* Mobile View */}
+          <div className="md:hidden divide-y">
+            {filteredFunds.map((fund) => {
+              const stats = calculateBudgetStats(fund.id);
+              const remaining = (fund.total_budget || 0) - stats.paid - stats.approved;
+              
+              return (
+                <div key={fund.id} className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-slate-800">{fund.fund_name}</h3>
+                      <p className="text-sm text-slate-500">{fund.fund_owner_name}</p>
                     </div>
                     <StatusBadge status={fund.status} />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                     <div>
                       <p className="text-slate-500">Budget</p>
                       <p className="font-semibold">${fund.total_budget?.toLocaleString()}</p>
                     </div>
                     <div>
+                      <p className="text-slate-500">Paid</p>
+                      <p className="font-semibold text-violet-600">${stats.paid.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500">Committed</p>
+                      <p className="font-semibold text-amber-600">${stats.approved.toLocaleString()}</p>
+                    </div>
+                    <div>
                       <p className="text-slate-500">Remaining</p>
-                      <p className="font-semibold text-emerald-600">
-                        ${(fund.remaining_budget || fund.total_budget)?.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Requests</p>
-                      <p className="font-semibold">{getRequestCount(fund.id)}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-500">Disbursed</p>
-                      <p className="font-semibold">${getTotalDisbursed(fund.id).toLocaleString()}</p>
+                      <p className="font-semibold text-emerald-600">${remaining.toLocaleString()}</p>
                     </div>
                   </div>
-                  {canManageFunds && (
-                    <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm" onClick={() => openEditModal(fund)}>
-                        <Edit className="w-4 h-4 mr-1" /> Edit
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          {fund.status !== "active" && (
-                            <DropdownMenuItem onClick={() => handleStatusChange(fund, "active")}>
-                              Activate
-                            </DropdownMenuItem>
-                          )}
-                          {fund.status === "active" && (
-                            <DropdownMenuItem onClick={() => handleStatusChange(fund, "inactive")}>
-                              Deactivate
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={() => handleStatusChange(fund, "archived")}>
-                            <Archive className="w-4 h-4 mr-2" /> Archive
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(fund)}>
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                  <Button asChild variant="outline" size="sm" className="w-full">
+                    <Link to={createPageUrl(`FundDetail?id=${fund.id}`)}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      View Details
+                    </Link>
+                  </Button>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Desktop View - Table */}
-          <Card className="hidden md:block bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
+          {/* Desktop View */}
+          <div className="hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50/50">
                   <TableHead>Fund Name</TableHead>
-                  <TableHead>Budget</TableHead>
-                  <TableHead>Remaining</TableHead>
-                  <TableHead>Requests</TableHead>
+                  <TableHead>Owner</TableHead>
+                  <TableHead className="text-right">Budget</TableHead>
+                  <TableHead className="text-right">Paid</TableHead>
+                  <TableHead className="text-right">Committed</TableHead>
+                  <TableHead className="text-right">Remaining</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Dates</TableHead>
-                  {canManageFunds && <TableHead className="w-20">Actions</TableHead>}
+                  <TableHead className="w-20">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredFunds.map((fund) => (
-                  <TableRow key={fund.id} className="hover:bg-slate-50/50">
-                    <TableCell>
-                      <div>
-                        <p className="font-semibold">{fund.fund_name}</p>
-                        {fund.description && (
-                          <p className="text-sm text-slate-500 line-clamp-1">{fund.description}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">${fund.total_budget?.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <span className="text-emerald-600 font-medium">
-                        ${(fund.remaining_budget || fund.total_budget)?.toLocaleString()}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4 text-slate-400" />
-                        {getRequestCount(fund.id)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={fund.status} />
-                    </TableCell>
-                    <TableCell className="text-slate-500 text-sm">
-                      {fund.start_date && fund.end_date ? (
-                        <>
-                          {format(new Date(fund.start_date), "MMM d")} - {format(new Date(fund.end_date), "MMM d, yyyy")}
-                        </>
-                      ) : fund.end_date ? (
-                        <>Ends {format(new Date(fund.end_date), "MMM d, yyyy")}</>
-                      ) : (
-                        "No dates set"
-                      )}
-                    </TableCell>
-                    {canManageFunds && (
+                {filteredFunds.map((fund) => {
+                  const stats = calculateBudgetStats(fund.id);
+                  const remaining = (fund.total_budget || 0) - stats.paid - stats.approved;
+                  const percentRemaining = ((remaining / (fund.total_budget || 1)) * 100);
+                  
+                  return (
+                    <TableRow key={fund.id} className="hover:bg-slate-50/50">
+                      <TableCell>
+                        <div>
+                          <p className="font-semibold">{fund.fund_name}</p>
+                          {fund.description && (
+                            <p className="text-sm text-slate-500 line-clamp-1">{fund.description}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          {fund.fund_owner_name || "Unknown"}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        ${fund.total_budget?.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col items-end">
+                          <span className="font-medium text-violet-600">${stats.paid.toLocaleString()}</span>
+                          <span className="text-xs text-slate-400">
+                            {((stats.paid / (fund.total_budget || 1)) * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col items-end">
+                          <span className="font-medium text-amber-600">${stats.approved.toLocaleString()}</span>
+                          <span className="text-xs text-slate-400">
+                            {((stats.approved / (fund.total_budget || 1)) * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col items-end">
+                          <span className={`font-medium ${
+                            percentRemaining < 20 ? "text-red-600" : 
+                            percentRemaining < 50 ? "text-amber-600" : 
+                            "text-emerald-600"
+                          }`}>
+                            ${remaining.toLocaleString()}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            {percentRemaining < 20 && <TrendingDown className="w-3 h-3 text-red-500" />}
+                            <span className="text-xs text-slate-400">
+                              {percentRemaining.toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={fund.status} />
+                      </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -374,138 +301,34 @@ export default function Funds() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditModal(fund)}>
-                              <Edit className="w-4 h-4 mr-2" /> Edit
+                            <DropdownMenuItem asChild>
+                              <Link to={createPageUrl(`FundDetail?id=${fund.id}`)}>
+                                <Eye className="w-4 h-4 mr-2" /> View Details
+                              </Link>
                             </DropdownMenuItem>
-                            {fund.status !== "active" && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(fund, "active")}>
-                                Activate
+                            {fund.status !== "archived" && (
+                              <DropdownMenuItem asChild>
+                                <Link to={createPageUrl(`FundDetail?id=${fund.id}&edit=true`)}>
+                                  <DollarSign className="w-4 h-4 mr-2" /> Edit Fund
+                                </Link>
                               </DropdownMenuItem>
                             )}
-                            {fund.status === "active" && (
-                              <DropdownMenuItem onClick={() => handleStatusChange(fund, "inactive")}>
-                                Deactivate
+                            {fund.status !== "archived" && (
+                              <DropdownMenuItem className="text-amber-600">
+                                <Archive className="w-4 h-4 mr-2" /> Archive
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem onClick={() => handleStatusChange(fund, "archived")}>
-                              <Archive className="w-4 h-4 mr-2" /> Archive
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(fund)}>
-                              <Trash2 className="w-4 h-4 mr-2" /> Delete
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))}
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
-          </Card>
-        </>
-      )}
-
-      {/* Create/Edit Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingFund ? "Edit Fund" : "Create New Fund"}</DialogTitle>
-            <DialogDescription>
-              {editingFund ? "Update the fund details below." : "Set up a new fund for student assistance."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Fund Name *</Label>
-              <Input
-                value={formData.fund_name}
-                onChange={(e) => setFormData({ ...formData, fund_name: e.target.value })}
-                placeholder="e.g., Emergency Assistance Fund"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Describe the purpose of this fund..."
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Eligibility Notes</Label>
-              <Textarea
-                value={formData.eligibility_notes}
-                onChange={(e) => setFormData({ ...formData, eligibility_notes: e.target.value })}
-                placeholder="Any eligibility requirements..."
-                rows={2}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Total Budget *</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    type="number"
-                    className="pl-9"
-                    value={formData.total_budget}
-                    onChange={(e) => setFormData({ ...formData, total_budget: e.target.value })}
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="archived">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Start Date</Label>
-                <Input
-                  type="date"
-                  value={formData.start_date}
-                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>End Date</Label>
-                <Input
-                  type="date"
-                  value={formData.end_date}
-                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                />
-              </div>
-            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={!formData.fund_name || !formData.total_budget || submitting}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {submitting ? <LoadingSpinner size="sm" className="mr-2" /> : null}
-              {editingFund ? "Save Changes" : "Create Fund"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </Card>
+      )}
     </div>
   );
 }

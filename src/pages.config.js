@@ -9,6 +9,8 @@ import Rules from './pages/Rules';
 import Users from './pages/Users';
 import Reports from './pages/Reports';
 import Profile from './pages/Profile';
+import FundDetail from './pages/FundDetail';
+import CreateFund from './pages/CreateFund';
 import __Layout from './Layout.jsx';
 
 
@@ -24,6 +26,8 @@ export const PAGES = {
     "Users": Users,
     "Reports": Reports,
     "Profile": Profile,
+    "FundDetail": FundDetail,
+    "CreateFund": CreateFund,
 }
 
 export const pagesConfig = {

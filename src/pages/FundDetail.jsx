@@ -1,0 +1,694 @@
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import PageHeader from "@/components/shared/PageHeader";
+import StatusBadge from "@/components/shared/StatusBadge";
+import LoadingSpinner from "@/components/shared/LoadingSpinner";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Alert,
+  AlertDescription,
+} from "@/components/ui/alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ArrowLeft,
+  Save,
+  Edit,
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  FileText,
+  Calendar,
+  AlertTriangle,
+  CheckCircle,
+  X
+} from "lucide-react";
+import { format } from "date-fns";
+
+const USE_CATEGORIES = [
+  "Tuition/Fees",
+  "Books/Supplies",
+  "Housing",
+  "Food",
+  "Transportation",
+  "Medical",
+  "Technology",
+  "Other"
+];
+
+export default function FundDetail() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [user, setUser] = useState(null);
+  const urlParams = new URLSearchParams(window.location.search);
+  const fundId = urlParams.get("id");
+  const editMode = urlParams.get("edit") === "true";
+  const [isEditing, setIsEditing] = useState(editMode);
+  const [formData, setFormData] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    const currentUser = await base44.auth.me();
+    setUser(currentUser);
+  };
+
+  const { data: fund, isLoading } = useQuery({
+    queryKey: ["fund", fundId],
+    queryFn: () => base44.entities.Fund.filter({ id: fundId }).then(res => res[0]),
+    enabled: !!fundId,
+  });
+
+  const { data: requests = [] } = useQuery({
+    queryKey: ["fundRequests", fundId],
+    queryFn: () => base44.entities.FundRequest.filter({ fund_id: fundId }),
+    enabled: !!fundId,
+  });
+
+  const { data: disbursements = [] } = useQuery({
+    queryKey: ["fundDisbursements", fundId],
+    queryFn: () => base44.entities.Disbursement.filter({ fund_id: fundId }),
+    enabled: !!fundId,
+  });
+
+  useEffect(() => {
+    if (fund) {
+      setFormData({
+        fund_name: fund.fund_name,
+        description: fund.description || "",
+        eligibility_notes: fund.eligibility_notes || "",
+        start_date: fund.start_date || "",
+        end_date: fund.end_date || "",
+        total_budget: fund.total_budget?.toString() || "",
+        max_request_amount: fund.max_request_amount?.toString() || "",
+        requires_attachments: fund.requires_attachments || false,
+        allowed_categories: fund.allowed_categories || [],
+        budget_enforcement: fund.budget_enforcement || "warn",
+        status: fund.status
+      });
+    }
+  }, [fund]);
+
+  const calculateBudgetStats = () => {
+    const paid = disbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0);
+    const approved = requests
+      .filter(r => r.status === "Approved")
+      .reduce((sum, r) => sum + (r.requested_amount || 0), 0);
+    const totalBudget = fund?.total_budget || 0;
+    const remaining = totalBudget - paid - approved;
+    
+    return { paid, approved, remaining, totalBudget };
+  };
+
+  const handleSave = async () => {
+    setSubmitting(true);
+
+    const updateData = {
+      fund_name: formData.fund_name,
+      description: formData.description,
+      eligibility_notes: formData.eligibility_notes,
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null,
+      total_budget: parseFloat(formData.total_budget),
+      max_request_amount: formData.max_request_amount ? parseFloat(formData.max_request_amount) : null,
+      requires_attachments: formData.requires_attachments,
+      allowed_categories: formData.allowed_categories,
+      budget_enforcement: formData.budget_enforcement,
+      status: formData.status
+    };
+
+    await base44.entities.Fund.update(fundId, updateData);
+
+    // Create audit log
+    await base44.entities.AuditLog.create({
+      actor_user_id: user.id,
+      actor_name: user.full_name,
+      action_type: "FUND_UPDATED",
+      entity_type: "Fund",
+      entity_id: fundId,
+      details: JSON.stringify({ fund_name: formData.fund_name })
+    });
+
+    queryClient.invalidateQueries(["fund", fundId]);
+    queryClient.invalidateQueries(["allFunds"]);
+    setIsEditing(false);
+    setSubmitting(false);
+  };
+
+  const toggleCategory = (category) => {
+    const current = formData.allowed_categories || [];
+    if (current.includes(category)) {
+      setFormData({
+        ...formData,
+        allowed_categories: current.filter(c => c !== category)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        allowed_categories: [...current, category]
+      });
+    }
+  };
+
+  if (isLoading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!fund) {
+    return (
+      <div className="text-center py-16">
+        <p className="text-slate-500">Fund not found</p>
+        <Button asChild className="mt-4">
+          <Link to={createPageUrl("Funds")}>Back to Funds</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const stats = calculateBudgetStats();
+  const percentPaid = (stats.paid / stats.totalBudget) * 100;
+  const percentCommitted = (stats.approved / stats.totalBudget) * 100;
+  const percentRemaining = (stats.remaining / stats.totalBudget) * 100;
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={createPageUrl("Funds")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Funds
+          </Link>
+        </Button>
+      </div>
+
+      <PageHeader
+        title={isEditing ? "Edit Fund" : fund.fund_name}
+        description={isEditing ? "Update fund details and constraints" : fund.description}
+        actions={
+          !isEditing && (
+            <Button onClick={() => setIsEditing(true)} className="bg-indigo-600 hover:bg-indigo-700">
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Fund
+            </Button>
+          )
+        }
+      />
+
+      {/* Budget Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-slate-500">Total Budget</p>
+              <DollarSign className="w-5 h-5 text-indigo-200" />
+            </div>
+            <p className="text-2xl font-bold text-slate-900">
+              ${stats.totalBudget.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-slate-500">Paid</p>
+              <TrendingDown className="w-5 h-5 text-violet-200" />
+            </div>
+            <p className="text-2xl font-bold text-violet-600">
+              ${stats.paid.toLocaleString()}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">{percentPaid.toFixed(1)}% of budget</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-slate-500">Committed</p>
+              <FileText className="w-5 h-5 text-amber-200" />
+            </div>
+            <p className="text-2xl font-bold text-amber-600">
+              ${stats.approved.toLocaleString()}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">{percentCommitted.toFixed(1)}% of budget</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-slate-500">Remaining</p>
+              <TrendingUp className="w-5 h-5 text-emerald-200" />
+            </div>
+            <p className={`text-2xl font-bold ${
+              percentRemaining < 20 ? "text-red-600" :
+              percentRemaining < 50 ? "text-amber-600" :
+              "text-emerald-600"
+            }`}>
+              ${stats.remaining.toLocaleString()}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">{percentRemaining.toFixed(1)}% remaining</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Budget Progress */}
+      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Budget Utilization</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="h-8 bg-slate-100 rounded-full overflow-hidden flex">
+              {percentPaid > 0 && (
+                <div 
+                  className="bg-violet-500 flex items-center justify-center text-white text-xs font-medium"
+                  style={{ width: `${percentPaid}%` }}
+                >
+                  {percentPaid > 5 && `Paid ${percentPaid.toFixed(0)}%`}
+                </div>
+              )}
+              {percentCommitted > 0 && (
+                <div 
+                  className="bg-amber-500 flex items-center justify-center text-white text-xs font-medium"
+                  style={{ width: `${percentCommitted}%` }}
+                >
+                  {percentCommitted > 5 && `Committed ${percentCommitted.toFixed(0)}%`}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-violet-500 rounded-sm"></div>
+                  <span>Paid: ${stats.paid.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-amber-500 rounded-sm"></div>
+                  <span>Committed: ${stats.approved.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-sm"></div>
+                  <span>Remaining: ${stats.remaining.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {isEditing ? (
+        /* Edit Mode */
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardHeader>
+            <CardTitle>Fund Details</CardTitle>
+            <CardDescription>Update fund information and constraints</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Basic Info */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-slate-800">Basic Information</h3>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Fund Name *</Label>
+                  <Input
+                    value={formData.fund_name}
+                    onChange={(e) => setFormData({ ...formData, fund_name: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) => setFormData({ ...formData, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Eligibility Notes</Label>
+                <Textarea
+                  value={formData.eligibility_notes}
+                  onChange={(e) => setFormData({ ...formData, eligibility_notes: e.target.value })}
+                  rows={2}
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>End Date</Label>
+                  <Input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Budget Settings */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-slate-800">Budget Settings</h3>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Total Budget *</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      type="number"
+                      className="pl-9"
+                      value={formData.total_budget}
+                      onChange={(e) => setFormData({ ...formData, total_budget: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Budget Enforcement</Label>
+                  <Select
+                    value={formData.budget_enforcement}
+                    onValueChange={(value) => setFormData({ ...formData, budget_enforcement: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None (No restrictions)</SelectItem>
+                      <SelectItem value="warn">Warn (Show warning)</SelectItem>
+                      <SelectItem value="block">Block (Prevent approval)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Constraints */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-slate-800">Application Constraints</h3>
+              
+              <div className="space-y-2">
+                <Label>Maximum Request Amount (Optional)</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                    type="number"
+                    className="pl-9"
+                    placeholder="No limit"
+                    value={formData.max_request_amount}
+                    onChange={(e) => setFormData({ ...formData, max_request_amount: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div>
+                  <Label className="text-sm">Require Attachments</Label>
+                  <p className="text-xs text-slate-500">Students must upload supporting documents</p>
+                </div>
+                <Switch
+                  checked={formData.requires_attachments}
+                  onCheckedChange={(checked) => setFormData({ ...formData, requires_attachments: checked })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Allowed Categories (Leave empty for all)</Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {USE_CATEGORIES.map((category) => (
+                    <Button
+                      key={category}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={`justify-start ${
+                        (formData.allowed_categories || []).includes(category)
+                          ? "bg-indigo-50 border-indigo-300 text-indigo-700"
+                          : ""
+                      }`}
+                      onClick={() => toggleCategory(category)}
+                    >
+                      {(formData.allowed_categories || []).includes(category) ? (
+                        <CheckCircle className="w-3 h-3 mr-2" />
+                      ) : (
+                        <div className="w-3 h-3 mr-2 rounded border-2 border-slate-300" />
+                      )}
+                      <span className="text-xs">{category.split("/")[0]}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  setFormData({
+                    fund_name: fund.fund_name,
+                    description: fund.description || "",
+                    eligibility_notes: fund.eligibility_notes || "",
+                    start_date: fund.start_date || "",
+                    end_date: fund.end_date || "",
+                    total_budget: fund.total_budget?.toString() || "",
+                    max_request_amount: fund.max_request_amount?.toString() || "",
+                    requires_attachments: fund.requires_attachments || false,
+                    allowed_categories: fund.allowed_categories || [],
+                    budget_enforcement: fund.budget_enforcement || "warn",
+                    status: fund.status
+                  });
+                }}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={submitting || !formData.fund_name || !formData.total_budget}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {submitting ? <LoadingSpinner size="sm" className="mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Changes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        /* View Mode */
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Fund Info */}
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardHeader>
+                <CardTitle className="text-lg">Fund Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {fund.description && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-500 mb-1">Description</p>
+                    <p className="text-slate-700">{fund.description}</p>
+                  </div>
+                )}
+                {fund.eligibility_notes && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-500 mb-1">Eligibility</p>
+                    <Alert className="bg-blue-50 border-blue-200">
+                      <AlertDescription className="text-blue-800 text-sm">
+                        {fund.eligibility_notes}
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+                <div className="grid md:grid-cols-2 gap-4 pt-2">
+                  {fund.start_date && (
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 mb-1">Start Date</p>
+                      <p className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        {format(new Date(fund.start_date), "MMMM d, yyyy")}
+                      </p>
+                    </div>
+                  )}
+                  {fund.end_date && (
+                    <div>
+                      <p className="text-sm font-medium text-slate-500 mb-1">End Date</p>
+                      <p className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-slate-400" />
+                        {format(new Date(fund.end_date), "MMMM d, yyyy")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Requests */}
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Recent Requests</CardTitle>
+                  <Badge variant="secondary">{requests.length} total</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {requests.length === 0 ? (
+                  <p className="text-center text-slate-500 py-8">No requests yet</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {requests.slice(0, 5).map((request) => (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-medium">{request.student_full_name}</TableCell>
+                          <TableCell>${request.requested_amount?.toLocaleString()}</TableCell>
+                          <TableCell><StatusBadge status={request.status} /></TableCell>
+                          <TableCell className="text-slate-500 text-sm">
+                            {format(new Date(request.created_date), "MMM d")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Constraints */}
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardHeader>
+                <CardTitle className="text-lg">Constraints</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Max Request</span>
+                  <span className="font-medium">
+                    {fund.max_request_amount ? `$${fund.max_request_amount.toLocaleString()}` : "No limit"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Attachments Required</span>
+                  <span className="font-medium">
+                    {fund.requires_attachments ? "Yes" : "No"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Budget Enforcement</span>
+                  <Badge variant={
+                    fund.budget_enforcement === "block" ? "destructive" :
+                    fund.budget_enforcement === "warn" ? "secondary" : "outline"
+                  }>
+                    {fund.budget_enforcement || "None"}
+                  </Badge>
+                </div>
+                {fund.allowed_categories && fund.allowed_categories.length > 0 && (
+                  <div>
+                    <p className="text-slate-500 mb-2">Allowed Categories</p>
+                    <div className="flex flex-wrap gap-1">
+                      {fund.allowed_categories.map((cat) => (
+                        <Badge key={cat} variant="outline" className="text-xs">
+                          {cat}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Fund Owner */}
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardHeader>
+                <CardTitle className="text-lg">Fund Owner</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="font-medium">{fund.fund_owner_name || "Unknown"}</p>
+                <p className="text-sm text-slate-500 mt-1">Fund Manager</p>
+              </CardContent>
+            </Card>
+
+            {/* Warning if low budget */}
+            {percentRemaining < 20 && (
+              <Alert className="bg-red-50 border-red-200">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+                <AlertDescription className="text-red-800 text-sm">
+                  <strong>Low Budget Warning</strong>
+                  <p className="mt-1">Only {percentRemaining.toFixed(0)}% of the budget remains.</p>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
