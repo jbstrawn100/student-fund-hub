@@ -210,7 +210,7 @@ export default function SuperAdminDashboard() {
                             View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link to={`/${org.subdomain}`}>
+                            <Link to={`/${org.subdomain}/Home`}>
                               <ExternalLink className="w-4 h-4 mr-2" />
                               Visit Portal
                             </Link>
