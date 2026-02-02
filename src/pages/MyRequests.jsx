@@ -38,8 +38,10 @@ import {
   Eye
 } from "lucide-react";
 import { format } from "date-fns";
+import { useOrgFilter } from "@/components/useOrgFilter";
 
 export default function MyRequests() {
+  const orgFilter = useOrgFilter();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -54,9 +56,9 @@ export default function MyRequests() {
   };
 
   const { data: requests = [], isLoading } = useQuery({
-    queryKey: ["myRequests", user?.id],
-    queryFn: () => base44.entities.FundRequest.filter({ student_user_id: user.id }, "-created_date"),
-    enabled: !!user?.id,
+    queryKey: ["myRequests", user?.id, orgFilter],
+    queryFn: () => base44.entities.FundRequest.filter({ ...orgFilter, student_user_id: user.id }, "-created_date"),
+    enabled: !!user?.id && !!orgFilter,
   });
 
   const filteredRequests = requests.filter((request) => {

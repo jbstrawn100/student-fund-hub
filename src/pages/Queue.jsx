@@ -38,8 +38,10 @@ import {
   Clock
 } from "lucide-react";
 import { format } from "date-fns";
+import { useOrgFilter } from "@/components/useOrgFilter";
 
 export default function Queue() {
+  const orgFilter = useOrgFilter();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("my_assigned");
@@ -59,18 +61,21 @@ export default function Queue() {
   };
 
   const { data: allRequests = [], isLoading } = useQuery({
-    queryKey: ["allRequests"],
-    queryFn: () => base44.entities.FundRequest.list("-created_date"),
+    queryKey: ["allRequests", orgFilter],
+    queryFn: () => base44.entities.FundRequest.filter(orgFilter, "-created_date"),
+    enabled: !!orgFilter,
   });
 
   const { data: funds = [] } = useQuery({
-    queryKey: ["allFunds"],
-    queryFn: () => base44.entities.Fund.list(),
+    queryKey: ["allFunds", orgFilter],
+    queryFn: () => base44.entities.Fund.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   const { data: allReviews = [] } = useQuery({
-    queryKey: ["allReviews"],
-    queryFn: () => base44.entities.Review.list(),
+    queryKey: ["allReviews", orgFilter],
+    queryFn: () => base44.entities.Review.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   // Calculate days since submission
@@ -96,7 +101,7 @@ export default function Queue() {
     } else if (viewMode === "role_queue") {
       // Show requests for user's role queue
       const roleReviews = allReviews.filter(r => 
-        r.reviewer_user_id === `role_${user.app_role}` && r.decision === "Pending"
+        r.reviewer_user_id === `role_${userRole}` && r.decision === "Pending"
       );
       const queueRequestIds = roleReviews.map(r => r.fund_request_id);
       requests = requests.filter(r => queueRequestIds.includes(r.id));
@@ -140,7 +145,8 @@ export default function Queue() {
     );
   }
 
-  const isFundManager = user?.app_role === "fund_manager" || user?.app_role === "admin";
+  const userRole = user?.staff_role || user?.app_role || "student";
+  const isFundManager = userRole === "fund_manager" || userRole === "admin";
 
   return (
     <div className="space-y-6">

@@ -37,8 +37,10 @@ import {
   TrendingDown,
   DollarSign
 } from "lucide-react";
+import { useOrgFilter } from "@/components/useOrgFilter";
 
 export default function Funds() {
+  const orgFilter = useOrgFilter();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
@@ -53,18 +55,21 @@ export default function Funds() {
   };
 
   const { data: funds = [], isLoading } = useQuery({
-    queryKey: ["allFunds"],
-    queryFn: () => base44.entities.Fund.list("-created_date"),
+    queryKey: ["allFunds", orgFilter],
+    queryFn: () => base44.entities.Fund.filter(orgFilter, "-created_date"),
+    enabled: !!orgFilter,
   });
 
   const { data: requests = [] } = useQuery({
-    queryKey: ["allRequests"],
-    queryFn: () => base44.entities.FundRequest.list(),
+    queryKey: ["allRequests", orgFilter],
+    queryFn: () => base44.entities.FundRequest.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   const { data: disbursements = [] } = useQuery({
-    queryKey: ["allDisbursements"],
-    queryFn: () => base44.entities.Disbursement.list(),
+    queryKey: ["allDisbursements", orgFilter],
+    queryFn: () => base44.entities.Disbursement.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   const calculateBudgetStats = (fundId) => {
@@ -92,7 +97,8 @@ export default function Funds() {
     archived: funds.filter(f => f.status === "archived").length,
   };
 
-  const canManageFunds = user?.app_role === "fund_manager" || user?.app_role === "admin";
+  const userRole = user?.staff_role || user?.app_role || "student";
+  const canManageFunds = userRole === "fund_manager" || userRole === "admin";
 
   if (!user) {
     return (

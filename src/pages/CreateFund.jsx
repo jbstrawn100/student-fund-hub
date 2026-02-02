@@ -13,6 +13,7 @@ import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import PageHeader from "@/components/shared/PageHeader";
 import { DollarSign, Save, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useOrganization } from "@/components/OrganizationContext";
 
 const USE_CATEGORIES = [
   "Tuition/Fees", "Books/Supplies", "Housing", "Food",
@@ -21,6 +22,7 @@ const USE_CATEGORIES = [
 
 export default function CreateFund() {
   const navigate = useNavigate();
+  const { organization } = useOrganization();
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     fund_name: "",
@@ -64,6 +66,7 @@ export default function CreateFund() {
     setSubmitting(true);
 
     const fundData = {
+      organization_id: organization.id,
       fund_name: formData.fund_name,
       description: formData.description,
       eligibility_notes: formData.eligibility_notes,
@@ -83,6 +86,7 @@ export default function CreateFund() {
     const newFund = await base44.entities.Fund.create(fundData);
 
     await base44.entities.AuditLog.create({
+      organization_id: organization.id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "FUND_CREATED",
