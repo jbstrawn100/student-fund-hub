@@ -84,6 +84,8 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
   const handleSave = async () => {
     setSubmitting(true);
 
+    const currentUser = await base44.auth.me();
+
     const ruleData = {
       fund_id: fundId,
       fund_name: fundName,
@@ -103,8 +105,32 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
 
     if (rule) {
       await base44.entities.RoutingRule.update(rule.id, ruleData);
+      await base44.entities.AuditLog.create({
+        actor_user_id: currentUser.id,
+        actor_name: currentUser.full_name,
+        action_type: "RULE_UPDATED",
+        entity_type: "RoutingRule",
+        entity_id: rule.id,
+        details: JSON.stringify({ 
+          fund_name: fundName,
+          step_name: formData.step_name,
+          step_order: formData.step_order
+        })
+      });
     } else {
-      await base44.entities.RoutingRule.create(ruleData);
+      const newRule = await base44.entities.RoutingRule.create(ruleData);
+      await base44.entities.AuditLog.create({
+        actor_user_id: currentUser.id,
+        actor_name: currentUser.full_name,
+        action_type: "RULE_CREATED",
+        entity_type: "RoutingRule",
+        entity_id: newRule.id,
+        details: JSON.stringify({ 
+          fund_name: fundName,
+          step_name: formData.step_name,
+          step_order: formData.step_order
+        })
+      });
     }
 
     setSubmitting(false);
@@ -114,6 +140,22 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this rule?")) return;
     setDeleting(true);
+    
+    const currentUser = await base44.auth.me();
+    
+    await base44.entities.AuditLog.create({
+      actor_user_id: currentUser.id,
+      actor_name: currentUser.full_name,
+      action_type: "RULE_DELETED",
+      entity_type: "RoutingRule",
+      entity_id: rule.id,
+      details: JSON.stringify({ 
+        fund_name: fundName,
+        step_name: rule.step_name,
+        step_order: rule.step_order
+      })
+    });
+    
     await base44.entities.RoutingRule.delete(rule.id);
     setDeleting(false);
     onClose();
