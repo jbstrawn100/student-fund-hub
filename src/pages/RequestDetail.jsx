@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tantml:react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import StatusTimeline from "@/components/requests/StatusTimeline";
 import StatusBadge from "@/components/shared/StatusBadge";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";

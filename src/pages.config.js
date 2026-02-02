@@ -48,47 +48,47 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import Apply from './pages/Apply';
+import AuditLog from './pages/AuditLog';
 import CreateFund from './pages/CreateFund';
+import CreateOrganization from './pages/CreateOrganization';
 import FundDetail from './pages/FundDetail';
 import Funds from './pages/Funds';
 import Home from './pages/Home';
 import MyRequests from './pages/MyRequests';
+import Notifications from './pages/Notifications';
+import OrganizationDetail from './pages/OrganizationDetail';
 import Profile from './pages/Profile';
 import Queue from './pages/Queue';
 import Reports from './pages/Reports';
 import RequestDetail from './pages/RequestDetail';
 import ReviewRequest from './pages/ReviewRequest';
 import Rules from './pages/Rules';
-import Users from './pages/Users';
-import Notifications from './pages/Notifications';
-import AuditLog from './pages/AuditLog';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import CreateOrganization from './pages/CreateOrganization';
-import OrganizationDetail from './pages/OrganizationDetail';
 import SuperAdminLayout from './pages/SuperAdminLayout';
+import Users from './pages/Users';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Apply": Apply,
+    "AuditLog": AuditLog,
     "CreateFund": CreateFund,
+    "CreateOrganization": CreateOrganization,
     "FundDetail": FundDetail,
     "Funds": Funds,
     "Home": Home,
     "MyRequests": MyRequests,
+    "Notifications": Notifications,
+    "OrganizationDetail": OrganizationDetail,
     "Profile": Profile,
     "Queue": Queue,
     "Reports": Reports,
     "RequestDetail": RequestDetail,
     "ReviewRequest": ReviewRequest,
     "Rules": Rules,
-    "Users": Users,
-    "Notifications": Notifications,
-    "AuditLog": AuditLog,
     "SuperAdminDashboard": SuperAdminDashboard,
-    "CreateOrganization": CreateOrganization,
-    "OrganizationDetail": OrganizationDetail,
     "SuperAdminLayout": SuperAdminLayout,
+    "Users": Users,
 }
 
 export const pagesConfig = {
