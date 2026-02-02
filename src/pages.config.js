@@ -65,6 +65,7 @@ import AuditLog from './pages/AuditLog';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import CreateOrganization from './pages/CreateOrganization';
 import OrganizationDetail from './pages/OrganizationDetail';
+import SuperAdminLayout from './pages/SuperAdminLayout';
 import __Layout from './Layout.jsx';
 
 
@@ -87,6 +88,7 @@ export const PAGES = {
     "SuperAdminDashboard": SuperAdminDashboard,
     "CreateOrganization": CreateOrganization,
     "OrganizationDetail": OrganizationDetail,
+    "SuperAdminLayout": SuperAdminLayout,
 }
 
 export const pagesConfig = {

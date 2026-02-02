@@ -11,8 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Download, FileText, User, DollarSign, Settings, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useOrgFilter } from "@/components/useOrgFilter";
 
 export default function AuditLog() {
+  const orgFilter = useOrgFilter();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
@@ -28,8 +30,9 @@ export default function AuditLog() {
   };
 
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ["auditLogs"],
-    queryFn: () => base44.entities.AuditLog.list("-created_date", 500),
+    queryKey: ["auditLogs", orgFilter],
+    queryFn: () => base44.entities.AuditLog.filter(orgFilter, "-created_date", 500),
+    enabled: !!orgFilter,
   });
 
   const filteredLogs = logs.filter(log => {
@@ -88,7 +91,9 @@ export default function AuditLog() {
     );
   }
 
-  if (user.app_role !== "admin" && user.app_role !== "fund_manager") {
+  const userRole = user.staff_role || user.app_role || "student";
+  
+  if (userRole !== "admin" && userRole !== "fund_manager") {
     return (
       <div className="text-center py-16">
         <p className="text-slate-500">Access restricted to administrators and fund managers</p>

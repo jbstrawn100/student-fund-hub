@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Download, DollarSign, PieChart, TrendingUp, FileText, CheckCircle, XCircle, Clock, Wallet } from "lucide-react";
 import { format, startOfMonth, parseISO } from "date-fns";
 import { BarChart, Bar, PieChart as RechartPie, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useOrgFilter } from "@/components/useOrgFilter";
 
 export default function Reports() {
+  const orgFilter = useOrgFilter();
   const [user, setUser] = useState(null);
   const [selectedFund, setSelectedFund] = useState("all");
   const [dateRange, setDateRange] = useState("all");
@@ -27,34 +29,39 @@ export default function Reports() {
   };
 
   const { data: requests = [] } = useQuery({
-    queryKey: ["allRequests"],
-    queryFn: () => base44.entities.FundRequest.list(),
+    queryKey: ["allRequests", orgFilter],
+    queryFn: () => base44.entities.FundRequest.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   const { data: funds = [] } = useQuery({
-    queryKey: ["allFunds"],
-    queryFn: () => base44.entities.Fund.list(),
+    queryKey: ["allFunds", orgFilter],
+    queryFn: () => base44.entities.Fund.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   const { data: disbursements = [] } = useQuery({
-    queryKey: ["allDisbursements"],
-    queryFn: () => base44.entities.Disbursement.list("-paid_at"),
+    queryKey: ["allDisbursements", orgFilter],
+    queryFn: () => base44.entities.Disbursement.filter(orgFilter, "-paid_at"),
+    enabled: !!orgFilter,
   });
 
   const { data: reviews = [] } = useQuery({
-    queryKey: ["allReviews"],
-    queryFn: () => base44.entities.Review.list(),
+    queryKey: ["allReviews", orgFilter],
+    queryFn: () => base44.entities.Review.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   // Filter funds based on user role
-  const availableFunds = user?.app_role === "admin" 
+  const userRole = user?.staff_role || user?.app_role || "student";
+  const availableFunds = userRole === "admin" 
     ? funds 
     : funds.filter(f => f.fund_owner_id === user?.id);
 
   // Filter data
   const filteredRequests = requests.filter(r => {
     // Fund managers see only their funds (unless admin)
-    if (user?.app_role !== "admin") {
+    if (userRole !== "admin") {
       const isMyFund = availableFunds.some(f => f.id === r.fund_id);
       if (!isMyFund) return false;
     }
@@ -78,7 +85,7 @@ export default function Reports() {
   });
 
   const filteredDisbursements = disbursements.filter(d => {
-    if (user?.app_role !== "admin") {
+    if (userRole !== "admin") {
       const isMyFund = availableFunds.some(f => f.id === d.fund_id);
       if (!isMyFund) return false;
     }
@@ -216,7 +223,7 @@ export default function Reports() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
-                  {user?.app_role === "admin" ? "All Funds" : "All My Funds"}
+                  {userRole === "admin" ? "All Funds" : "All My Funds"}
                 </SelectItem>
                 {availableFunds.map(f => (
                   <SelectItem key={f.id} value={f.id}>{f.fund_name}</SelectItem>

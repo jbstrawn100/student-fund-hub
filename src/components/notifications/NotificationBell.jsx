@@ -9,14 +9,16 @@ import { Card } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Bell, Check } from "lucide-react";
 import { format } from "date-fns";
+import { useOrgFilter } from "@/components/useOrgFilter";
 
 export default function NotificationBell({ user }) {
   const queryClient = useQueryClient();
+  const orgFilter = useOrgFilter();
 
   const { data: notifications = [] } = useQuery({
-    queryKey: ["notifications", user?.id],
-    queryFn: () => base44.entities.Notification.filter({ user_id: user.id }, "-created_date", 50),
-    enabled: !!user,
+    queryKey: ["notifications", user?.id, orgFilter],
+    queryFn: () => base44.entities.Notification.filter({ ...orgFilter, user_id: user.id }, "-created_date", 50),
+    enabled: !!user && !!orgFilter,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 

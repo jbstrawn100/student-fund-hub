@@ -53,6 +53,8 @@ import {
   UserCheck
 } from "lucide-react";
 import { format } from "date-fns";
+import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrganization } from "@/components/OrganizationContext";
 
 const roleColors = {
   student: "bg-blue-100 text-blue-800 border-blue-200",
@@ -72,6 +74,8 @@ const roleIcons = {
 
 export default function Users() {
   const queryClient = useQueryClient();
+  const orgFilter = useOrgFilter();
+  const { organization } = useOrganization();
   const [currentUser, setCurrentUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -92,25 +96,27 @@ export default function Users() {
   };
 
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ["allUsers"],
-    queryFn: () => base44.entities.User.list("-created_date"),
+    queryKey: ["allUsers", orgFilter],
+    queryFn: () => base44.entities.User.filter(orgFilter, "-created_date"),
+    enabled: !!orgFilter,
   });
 
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || user.app_role === roleFilter;
+    const userStaffRole = user.staff_role || user.app_role || "student";
+    const matchesRole = roleFilter === "all" || userStaffRole === roleFilter;
     return matchesSearch && matchesRole;
   });
 
   const roleCounts = {
     all: users.length,
-    student: users.filter(u => u.app_role === "student" || !u.app_role).length,
-    reviewer: users.filter(u => u.app_role === "reviewer").length,
-    approver: users.filter(u => u.app_role === "approver").length,
-    fund_manager: users.filter(u => u.app_role === "fund_manager").length,
-    admin: users.filter(u => u.app_role === "admin").length,
+    student: users.filter(u => (u.staff_role || u.app_role || "student") === "student").length,
+    reviewer: users.filter(u => (u.staff_role || u.app_role) === "reviewer").length,
+    approver: users.filter(u => (u.staff_role || u.app_role) === "approver").length,
+    fund_manager: users.filter(u => (u.staff_role || u.app_role) === "fund_manager").length,
+    admin: users.filter(u => (u.staff_role || u.app_role) === "admin").length,
   };
 
   const handleInvite = async () => {
@@ -136,7 +142,7 @@ export default function Users() {
     setSubmitting(true);
     
     await base44.entities.User.update(editingUser.id, {
-      app_role: newRole,
+      staff_role: newRole,
       status: newStatus
     });
 
@@ -216,12 +222,13 @@ export default function Users() {
             {/* Mobile View */}
             <div className="md:hidden divide-y">
               {filteredUsers.map((user) => {
-                const RoleIcon = roleIcons[user.app_role] || GraduationCap;
+                const userStaffRole = user.staff_role || user.app_role || "student";
+                const RoleIcon = roleIcons[userStaffRole] || GraduationCap;
                 return (
                   <div key={user.id} className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${roleColors[user.app_role] || roleColors.student}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${roleColors[userStaffRole] || roleColors.student}`}>
                           <RoleIcon className="w-5 h-5" />
                         </div>
                         <div>
@@ -234,8 +241,8 @@ export default function Users() {
                       </Button>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline" className={roleColors[user.app_role] || roleColors.student}>
-                        {(user.app_role || "student").replace("_", " ")}
+                      <Badge variant="outline" className={roleColors[userStaffRole] || roleColors.student}>
+                        {userStaffRole.replace("_", " ")}
                       </Badge>
                       <StatusBadge status={user.status || "active"} />
                     </div>
@@ -259,12 +266,13 @@ export default function Users() {
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.map((user) => {
-                    const RoleIcon = roleIcons[user.app_role] || GraduationCap;
+                    const userStaffRole = user.staff_role || user.app_role || "student";
+                    const RoleIcon = roleIcons[userStaffRole] || GraduationCap;
                     return (
                       <TableRow key={user.id} className="hover:bg-slate-50/50">
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${roleColors[user.app_role] || roleColors.student}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${roleColors[userStaffRole] || roleColors.student}`}>
                               <RoleIcon className="w-5 h-5" />
                             </div>
                             <div>
@@ -284,8 +292,8 @@ export default function Users() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={`${roleColors[user.app_role] || roleColors.student} capitalize`}>
-                            {(user.app_role || "student").replace("_", " ")}
+                          <Badge variant="outline" className={`${roleColors[userStaffRole] || roleColors.student} capitalize`}>
+                            {userStaffRole.replace("_", " ")}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -390,8 +398,8 @@ export default function Users() {
               <div className="space-y-2">
                 <Label>Role</Label>
                 <Select
-                  value={editingUser.app_role || "student"}
-                  onValueChange={(value) => setEditingUser({ ...editingUser, app_role: value })}
+                  value={editingUser.staff_role || editingUser.app_role || "student"}
+                  onValueChange={(value) => setEditingUser({ ...editingUser, staff_role: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -428,7 +436,7 @@ export default function Users() {
               Cancel
             </Button>
             <Button
-              onClick={() => handleUpdateUser(editingUser.app_role, editingUser.status)}
+              onClick={() => handleUpdateUser(editingUser.staff_role || editingUser.app_role, editingUser.status)}
               disabled={submitting}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
