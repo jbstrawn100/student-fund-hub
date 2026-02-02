@@ -30,9 +30,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import OrganizationWrapper from "@/components/OrganizationWrapper";
 import { useOrganization } from "@/components/OrganizationContext";
 
-export default function Layout({ children, currentPageName }) {
+function LayoutContent({ children, currentPageName }) {
   const { organization, isSuperAdmin } = useOrganization();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -255,5 +256,13 @@ function UserDropdown({ user, handleLogout, fullWidth }) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+export default function Layout({ children, currentPageName }) {
+  return (
+    <OrganizationWrapper>
+      <LayoutContent children={children} currentPageName={currentPageName} />
+    </OrganizationWrapper>
   );
 }
