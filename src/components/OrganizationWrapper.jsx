@@ -32,8 +32,8 @@ function OrganizationChecker({ children }) {
     );
   }
 
-  // Check if organization is active
-  if (organization.status !== "active") {
+  // Check if organization is active (but allow super admins to view inactive orgs)
+  if (organization.status !== "active" && !isSuperAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="text-center">

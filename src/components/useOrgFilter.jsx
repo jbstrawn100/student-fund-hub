@@ -4,7 +4,12 @@ import { useOrganization } from "./OrganizationContext";
 export function useOrgFilter() {
   const { organization, isSuperAdmin } = useOrganization();
   
-  // Super admin can see all data (no filter)
+  // Super admin viewing a specific organization - filter by that org
+  if (isSuperAdmin && organization) {
+    return { organization_id: organization.id };
+  }
+  
+  // Super admin not viewing any specific organization - see all data
   if (isSuperAdmin) {
     return {};
   }

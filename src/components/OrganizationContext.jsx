@@ -35,12 +35,19 @@ export function OrganizationProvider({ children }) {
         
         if (orgs.length > 0) {
           setOrganization(orgs[0]);
-          setIsSuperAdmin(false);
+          
+          // Check if user is super admin (no organization_id on user record)
+          try {
+            const user = await base44.auth.me();
+            setIsSuperAdmin(!user.organization_id);
+          } catch (err) {
+            setIsSuperAdmin(false);
+          }
         } else {
           console.error("Organization not found for subdomain:", subdomain);
         }
       } else {
-        // No /org/ prefix = super admin
+        // No /org/ prefix = super admin mode
         setIsSuperAdmin(true);
       }
     } catch (error) {
