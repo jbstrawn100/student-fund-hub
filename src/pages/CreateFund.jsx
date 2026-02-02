@@ -88,7 +88,12 @@ export default function CreateFund() {
       action_type: "FUND_CREATED",
       entity_type: "Fund",
       entity_id: newFund.id,
-      details: JSON.stringify({ fund_name: formData.fund_name })
+      details: JSON.stringify({ 
+        fund_name: formData.fund_name,
+        total_budget: formData.total_budget,
+        start_date: formData.start_date,
+        end_date: formData.end_date
+      })
     });
 
     navigate(createPageUrl(`FundDetail?id=${newFund.id}`));
