@@ -33,5 +33,5 @@ export function useOrgPrefix() {
   const { organization, isSuperAdmin } = useOrganization();
   
   if (isSuperAdmin || !organization) return "";
-  return `/org/${organization.subdomain}`;
+  return `/${organization.subdomain}`;
 }

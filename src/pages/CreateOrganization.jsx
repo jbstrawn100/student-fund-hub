@@ -86,7 +86,7 @@ export default function CreateOrganization() {
             <div className="space-y-2">
               <Label>URL Path *</Label>
               <div className="flex items-center gap-2">
-                <span className="text-slate-500">/org/</span>
+                <span className="text-slate-500">/</span>
                 <Input
                   placeholder="acme"
                   value={formData.subdomain}
@@ -95,7 +95,7 @@ export default function CreateOrganization() {
                 />
               </div>
               <p className="text-xs text-slate-500">
-                Organization will be accessible at: /org/{formData.subdomain || 'path'}
+                Organization will be accessible at: /{formData.subdomain || 'path'}
               </p>
             </div>
 

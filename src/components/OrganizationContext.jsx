@@ -26,9 +26,9 @@ export function OrganizationProvider({ children }) {
       const path = window.location.pathname;
       const pathParts = path.split('/').filter(Boolean);
       
-      // If path starts with /org/{subdomain}, load that organization
-      if (pathParts[0] === 'org' && pathParts[1]) {
-        const subdomain = pathParts[1];
+      // If path starts with /{subdomain}, load that organization
+      if (pathParts[0]) {
+        const subdomain = pathParts[0];
         
         // Fetch organization by subdomain
         const orgs = await base44.entities.Organization.filter({ subdomain });
@@ -44,11 +44,9 @@ export function OrganizationProvider({ children }) {
             setIsSuperAdmin(false);
           }
         } else {
-          console.error("Organization not found for subdomain:", subdomain);
+          // Path exists but no matching org = super admin mode
+          setIsSuperAdmin(true);
         }
-      } else {
-        // No /org/ prefix = super admin mode
-        setIsSuperAdmin(true);
       }
     } catch (error) {
       console.error("Error loading organization:", error);

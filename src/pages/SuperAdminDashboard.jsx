@@ -158,7 +158,7 @@ export default function SuperAdminDashboard() {
             <TableHeader>
               <TableRow>
                 <TableHead>Organization</TableHead>
-                <TableHead>Subdomain</TableHead>
+                <TableHead>URL Path</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Users</TableHead>
                 <TableHead>Requests</TableHead>
@@ -177,7 +177,7 @@ export default function SuperAdminDashboard() {
                     </TableCell>
                     <TableCell>
                       <code className="text-xs bg-slate-100 px-2 py-1 rounded">
-                        /org/{org.subdomain}
+                        /{org.subdomain}
                       </code>
                     </TableCell>
                     <TableCell>
@@ -210,7 +210,7 @@ export default function SuperAdminDashboard() {
                             View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link to={`/org/${org.subdomain}`}>
+                            <Link to={`/${org.subdomain}`}>
                               <ExternalLink className="w-4 h-4 mr-2" />
                               Visit Portal
                             </Link>
