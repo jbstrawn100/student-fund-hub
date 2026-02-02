@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
+import { useOrgFilter } from "@/components/useOrgFilter";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -48,14 +49,18 @@ export default function Home() {
 }
 
 function StudentDashboard({ user }) {
+  const orgFilter = useOrgFilter();
+
   const { data: myRequests = [], isLoading } = useQuery({
-    queryKey: ["myRequests", user.id],
-    queryFn: () => base44.entities.FundRequest.filter({ student_user_id: user.id }),
+    queryKey: ["myRequests", user.id, orgFilter],
+    queryFn: () => base44.entities.FundRequest.filter({ ...orgFilter, student_user_id: user.id }),
+    enabled: !!orgFilter,
   });
 
   const { data: activeFunds = [] } = useQuery({
-    queryKey: ["activeFunds"],
-    queryFn: () => base44.entities.Fund.filter({ status: "active" }),
+    queryKey: ["activeFunds", orgFilter],
+    queryFn: () => base44.entities.Fund.filter({ ...orgFilter, status: "active" }),
+    enabled: !!orgFilter,
   });
 
   const stats = {
@@ -201,19 +206,24 @@ function StudentDashboard({ user }) {
 }
 
 function StaffDashboard({ user }) {
+  const orgFilter = useOrgFilter();
+
   const { data: allRequests = [], isLoading } = useQuery({
-    queryKey: ["allRequests"],
-    queryFn: () => base44.entities.FundRequest.list("-created_date"),
+    queryKey: ["allRequests", orgFilter],
+    queryFn: () => base44.entities.FundRequest.filter(orgFilter, "-created_date"),
+    enabled: !!orgFilter,
   });
 
   const { data: funds = [] } = useQuery({
-    queryKey: ["allFunds"],
-    queryFn: () => base44.entities.Fund.list(),
+    queryKey: ["allFunds", orgFilter],
+    queryFn: () => base44.entities.Fund.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   const { data: disbursements = [] } = useQuery({
-    queryKey: ["disbursements"],
-    queryFn: () => base44.entities.Disbursement.list(),
+    queryKey: ["disbursements", orgFilter],
+    queryFn: () => base44.entities.Disbursement.filter(orgFilter),
+    enabled: !!orgFilter,
   });
 
   const stats = {
