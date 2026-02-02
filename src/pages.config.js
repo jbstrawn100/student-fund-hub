@@ -60,6 +60,8 @@ import RequestDetail from './pages/RequestDetail';
 import ReviewRequest from './pages/ReviewRequest';
 import Rules from './pages/Rules';
 import Users from './pages/Users';
+import Notifications from './pages/Notifications';
+import AuditLog from './pages/AuditLog';
 import __Layout from './Layout.jsx';
 
 
@@ -77,6 +79,8 @@ export const PAGES = {
     "ReviewRequest": ReviewRequest,
     "Rules": Rules,
     "Users": Users,
+    "Notifications": Notifications,
+    "AuditLog": AuditLog,
 }
 
 export const pagesConfig = {
