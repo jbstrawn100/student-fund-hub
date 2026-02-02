@@ -16,7 +16,8 @@ import {
   PlusCircle,
   ChevronDown,
   User as UserIcon,
-  Home
+  Home,
+  FileSearch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import NotificationBell from "@/components/notifications/NotificationBell";
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -70,7 +72,10 @@ export default function Layout({ children, currentPageName }) {
     { name: "Funds", icon: Wallet, page: "Funds" },
     { name: "Reports", icon: BarChart3, page: "Reports" },
     ...(isFundManager ? [{ name: "Routing Rules", icon: Settings, page: "Rules" }] : []),
-    ...(isAdmin ? [{ name: "Users", icon: Users, page: "Users" }] : []),
+    ...(isAdmin ? [
+      { name: "Users", icon: Users, page: "Users" },
+      { name: "Audit Log", icon: FileSearch, page: "AuditLog" }
+    ] : []),
   ];
 
   const navItems = isStaff ? staffNavItems : studentNavItems;
@@ -105,7 +110,10 @@ export default function Layout({ children, currentPageName }) {
               <span className="font-semibold text-slate-800">Student Funds</span>
             </div>
           </div>
-          <UserDropdown user={user} handleLogout={handleLogout} />
+          <div className="flex items-center gap-2">
+            {user && <NotificationBell user={user} />}
+            <UserDropdown user={user} handleLogout={handleLogout} />
+          </div>
         </div>
       </header>
 
@@ -160,7 +168,12 @@ export default function Layout({ children, currentPageName }) {
           </nav>
 
           {/* User Section */}
-          <div className="p-4 border-t border-slate-100">
+          <div className="p-4 border-t border-slate-100 space-y-3">
+            {user && (
+              <div className="hidden lg:flex justify-end">
+                <NotificationBell user={user} />
+              </div>
+            )}
             <div className="hidden lg:block">
               <UserDropdown user={user} handleLogout={handleLogout} fullWidth />
             </div>

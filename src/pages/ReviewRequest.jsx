@@ -203,9 +203,56 @@ export default function ReviewRequest() {
       details: JSON.stringify({ 
         decision, 
         comments: reviewComments,
-        step: currentReview.step_name
+        step: currentReview.step_name,
+        new_status: newStatus
       })
     });
+
+    // Notify student
+    const notificationTypes = {
+      "Approved": { type: "approved", title: "Request Approved! 🎉", emailSubject: "Fund Request Approved" },
+      "Denied": { type: "denied", title: "Request Decision", emailSubject: "Fund Request Update" },
+      "Needs Info": { type: "needs_info", title: "Additional Information Needed", emailSubject: "Action Required: Fund Request" }
+    };
+
+    const notifConfig = notificationTypes[decision];
+    if (notifConfig && (decision === "Approved" || decision === "Denied" || decision === "Needs Info")) {
+      const isFullyApproved = newStatus === "Approved";
+      
+      let message = "";
+      let emailBody = "";
+
+      if (decision === "Needs Info") {
+        message = `Your application for ${request.fund_name} needs additional information. ${reviewComments}`;
+        emailBody = `Dear ${request.student_full_name},\n\nWe need more information about your fund request (${request.request_id}).\n\n${reviewComments}\n\nPlease update your application with the requested information.\n\nBest regards,\nStudent Funds Team`;
+      } else if (decision === "Approved" && isFullyApproved) {
+        message = `Your application for ${request.fund_name} has been approved for $${request.requested_amount.toLocaleString()}!`;
+        emailBody = `Dear ${request.student_full_name},\n\nGreat news! Your fund request (${request.request_id}) has been approved.\n\nFund: ${request.fund_name}\nAmount: $${request.requested_amount.toLocaleString()}\n\nPayment will be processed shortly.\n\nBest regards,\nStudent Funds Team`;
+      } else if (decision === "Denied") {
+        message = `Your application for ${request.fund_name} was not approved. ${reviewComments}`;
+        emailBody = `Dear ${request.student_full_name},\n\nWe regret to inform you that your fund request (${request.request_id}) was not approved.\n\n${reviewComments}\n\nYou may submit a new application if circumstances change.\n\nBest regards,\nStudent Funds Team`;
+      }
+
+      if (message) {
+        await base44.entities.Notification.create({
+          user_id: request.student_user_id,
+          user_email: request.student_email,
+          type: notifConfig.type,
+          title: notifConfig.title,
+          message: message,
+          link: createPageUrl(`RequestDetail?id=${requestId}`),
+          related_entity_type: "FundRequest",
+          related_entity_id: requestId,
+          email_sent: true
+        });
+
+        await base44.integrations.Core.SendEmail({
+          to: request.student_email,
+          subject: `${notifConfig.emailSubject} - ${request.request_id}`,
+          body: emailBody
+        });
+      }
+    }
 
     queryClient.invalidateQueries(["fundRequest", requestId]);
     queryClient.invalidateQueries(["reviews", requestId]);
@@ -267,11 +314,32 @@ export default function ReviewRequest() {
       entity_type: "Disbursement",
       entity_id: requestId,
       details: JSON.stringify({ 
-        ...disbursementData, 
         amount_paid: amountPaid,
+        payment_method: disbursementData.payment_method,
         total_disbursed: totalDisbursed,
-        requested_amount: request.requested_amount
+        requested_amount: request.requested_amount,
+        new_status: newStatus
       })
+    });
+
+    // Notify student about payment
+    const isPaidInFull = newStatus === "Paid";
+    await base44.entities.Notification.create({
+      user_id: request.student_user_id,
+      user_email: request.student_email,
+      type: "paid",
+      title: isPaidInFull ? "Payment Processed ✓" : "Partial Payment Processed",
+      message: `${isPaidInFull ? "Your full payment" : `A payment of $${amountPaid.toLocaleString()}`} for ${request.fund_name} has been processed via ${disbursementData.payment_method}.`,
+      link: createPageUrl(`RequestDetail?id=${requestId}`),
+      related_entity_type: "FundRequest",
+      related_entity_id: requestId,
+      email_sent: true
+    });
+
+    await base44.integrations.Core.SendEmail({
+      to: request.student_email,
+      subject: `${isPaidInFull ? "Payment Processed" : "Partial Payment Processed"} - ${request.request_id}`,
+      body: `Dear ${request.student_full_name},\n\n${isPaidInFull ? "Your full payment" : `A payment of $${amountPaid.toLocaleString()}`} has been processed.\n\nFund: ${request.fund_name}\nAmount Paid: $${amountPaid.toLocaleString()}\nPayment Method: ${disbursementData.payment_method}\nDate: ${format(new Date(disbursementData.paid_at), "MMMM d, yyyy")}\n\n${isPaidInFull ? "Your request is now complete." : `Remaining balance: $${(totalDisbursed + amountPaid - request.requested_amount).toLocaleString()}`}\n\nBest regards,\nStudent Funds Team`
     });
 
     queryClient.invalidateQueries(["fundRequest", requestId]);
