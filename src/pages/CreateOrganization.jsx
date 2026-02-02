@@ -84,18 +84,18 @@ export default function CreateOrganization() {
             </div>
 
             <div className="space-y-2">
-              <Label>Subdomain *</Label>
+              <Label>URL Path *</Label>
               <div className="flex items-center gap-2">
+                <span className="text-slate-500">/org/</span>
                 <Input
                   placeholder="acme"
                   value={formData.subdomain}
                   onChange={(e) => setFormData({ ...formData, subdomain: e.target.value.toLowerCase() })}
                   className="flex-1"
                 />
-                <span className="text-slate-500">.app.com</span>
               </div>
               <p className="text-xs text-slate-500">
-                Organization will be accessible at: {formData.subdomain || 'subdomain'}.app.com
+                Organization will be accessible at: /org/{formData.subdomain || 'path'}
               </p>
             </div>
 
