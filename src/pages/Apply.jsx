@@ -47,6 +47,8 @@ import {
   File
 } from "lucide-react";
 import { format } from "date-fns";
+import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrganization } from "@/components/OrganizationContext";
 
 const USE_CATEGORIES = [
   "Tuition/Fees",
@@ -72,6 +74,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export default function Apply() {
   const navigate = useNavigate();
+  const { organization } = useOrganization();
+  const orgFilter = useOrgFilter();
   const [user, setUser] = useState(null);
   const [selectedFund, setSelectedFund] = useState(null);
   const [formData, setFormData] = useState({
@@ -114,8 +118,9 @@ export default function Apply() {
   };
 
   const { data: funds = [], isLoading } = useQuery({
-    queryKey: ["activeFunds"],
-    queryFn: () => base44.entities.Fund.filter({ status: "active" }),
+    queryKey: ["activeFunds", orgFilter],
+    queryFn: () => base44.entities.Fund.filter({ ...orgFilter, status: "active" }),
+    enabled: !!orgFilter,
   });
 
   useEffect(() => {
@@ -254,15 +259,16 @@ export default function Apply() {
   const generateRequestId = async () => {
     const year = new Date().getFullYear();
     
-    // Get count of requests this year to generate sequence
-    const allRequests = await base44.entities.FundRequest.list();
+    // Get count of requests this year for this org to generate sequence
+    const allRequests = await base44.entities.FundRequest.filter(orgFilter);
     const thisYearRequests = allRequests.filter(r => {
       const requestYear = new Date(r.created_date).getFullYear();
       return requestYear === year;
     });
     
     const sequence = (thisYearRequests.length + 1).toString().padStart(6, '0');
-    return `FUND-${year}-${sequence}`;
+    const orgPrefix = organization?.subdomain?.toUpperCase().slice(0, 3) || "ORG";
+    return `${orgPrefix}-${year}-${sequence}`;
   };
 
   const handleSaveAsDraft = async () => {
@@ -271,6 +277,7 @@ export default function Apply() {
     const requestId = await generateRequestId();
 
     const requestData = {
+      organization_id: organization.id,
       request_id: requestId,
       fund_id: selectedFund.id,
       fund_name: selectedFund.fund_name,
@@ -308,6 +315,7 @@ export default function Apply() {
     const requestId = await generateRequestId();
 
     const requestData = {
+      organization_id: organization.id,
       request_id: requestId,
       fund_id: selectedFund.id,
       fund_name: selectedFund.fund_name,
@@ -330,6 +338,7 @@ export default function Apply() {
 
     // Get routing rules for this fund
     const rules = await base44.entities.RoutingRule.filter({ 
+      organization_id: organization.id,
       fund_id: selectedFund.id,
       is_active: true 
     }, "step_order");
@@ -367,6 +376,7 @@ export default function Apply() {
       if (reviewerIds.length > 0) {
         for (let i = 0; i < reviewerIds.length; i++) {
           await base44.entities.Review.create({
+            organization_id: organization.id,
             fund_request_id: newRequest.id,
             reviewer_user_id: reviewerIds[i],
             reviewer_name: reviewerNames[i] || "Reviewer",
@@ -392,6 +402,7 @@ export default function Apply() {
 
     // Create audit log
     await base44.entities.AuditLog.create({
+      organization_id: organization.id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "REQUEST_SUBMITTED",
