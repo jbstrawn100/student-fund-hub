@@ -38,10 +38,11 @@ import {
   Eye
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 
 export default function MyRequests() {
   const orgFilter = useOrgFilter();
+  const orgPrefix = useOrgPrefix();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -96,7 +97,7 @@ export default function MyRequests() {
         description="Track and manage your fund requests"
         actions={
           <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-            <Link to={createPageUrl("Apply")}>
+            <Link to={orgPrefix + createPageUrl("Apply")}>
               <PlusCircle className="w-4 h-4 mr-2" />
               New Request
             </Link>
@@ -208,7 +209,7 @@ export default function MyRequests() {
             action={
               requests.length === 0 && (
                 <Button asChild className="mt-4">
-                  <Link to={createPageUrl("Apply")}>
+                  <Link to={orgPrefix + createPageUrl("Apply")}>
                     <PlusCircle className="w-4 h-4 mr-2" />
                     Apply for Fund
                   </Link>
@@ -223,7 +224,7 @@ export default function MyRequests() {
               {filteredRequests.map((request) => (
                 <Link
                   key={request.id}
-                  to={createPageUrl(`RequestDetail?id=${request.id}`)}
+                  to={orgPrefix + createPageUrl(`RequestDetail?id=${request.id}`)}
                   className="block p-4 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -295,7 +296,7 @@ export default function MyRequests() {
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to={createPageUrl(`RequestDetail?id=${request.id}`)}>
+                          <Link to={orgPrefix + createPageUrl(`RequestDetail?id=${request.id}`)}>
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>

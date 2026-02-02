@@ -14,6 +14,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import { DollarSign, Save, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOrganization } from "@/components/OrganizationContext";
+import { useOrgPrefix } from "@/components/useOrgFilter";
 
 const USE_CATEGORIES = [
   "Tuition/Fees", "Books/Supplies", "Housing", "Food",
@@ -23,6 +24,7 @@ const USE_CATEGORIES = [
 export default function CreateFund() {
   const navigate = useNavigate();
   const { organization } = useOrganization();
+  const orgPrefix = useOrgPrefix();
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     fund_name: "",
@@ -100,7 +102,7 @@ export default function CreateFund() {
       })
     });
 
-    navigate(createPageUrl(`FundDetail?id=${newFund.id}`));
+    navigate(orgPrefix + createPageUrl(`FundDetail?id=${newFund.id}`));
   };
 
   if (!user) {
@@ -115,7 +117,7 @@ export default function CreateFund() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={createPageUrl("Funds")}>
+          <Link to={orgPrefix + createPageUrl("Funds")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Funds
           </Link>
@@ -285,7 +287,7 @@ export default function CreateFund() {
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" asChild>
-              <Link to={createPageUrl("Funds")}>Cancel</Link>
+              <Link to={orgPrefix + createPageUrl("Funds")}>Cancel</Link>
             </Button>
             <Button
               onClick={handleSubmit}

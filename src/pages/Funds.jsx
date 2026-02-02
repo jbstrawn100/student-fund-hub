@@ -37,10 +37,11 @@ import {
   TrendingDown,
   DollarSign
 } from "lucide-react";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 
 export default function Funds() {
   const orgFilter = useOrgFilter();
+  const orgPrefix = useOrgPrefix();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
@@ -116,7 +117,7 @@ export default function Funds() {
         actions={
           canManageFunds && (
             <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-              <Link to={createPageUrl("CreateFund")}>
+              <Link to={orgPrefix + createPageUrl("CreateFund")}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Fund
               </Link>
@@ -169,7 +170,7 @@ export default function Funds() {
           action={
             funds.length === 0 && canManageFunds && (
               <Button asChild className="mt-4">
-                <Link to={createPageUrl("CreateFund")}>
+                <Link to={orgPrefix + createPageUrl("CreateFund")}>
                   <Plus className="w-4 h-4 mr-2" />
                   Create Fund
                 </Link>
@@ -213,7 +214,7 @@ export default function Funds() {
                     </div>
                   </div>
                   <Button asChild variant="outline" size="sm" className="w-full">
-                    <Link to={createPageUrl(`FundDetail?id=${fund.id}`)}>
+                    <Link to={orgPrefix + createPageUrl(`FundDetail?id=${fund.id}`)}>
                       <Eye className="w-4 h-4 mr-2" />
                       View Details
                     </Link>
@@ -308,13 +309,13 @@ export default function Funds() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link to={createPageUrl(`FundDetail?id=${fund.id}`)}>
+                              <Link to={orgPrefix + createPageUrl(`FundDetail?id=${fund.id}`)}>
                                 <Eye className="w-4 h-4 mr-2" /> View Details
                               </Link>
                             </DropdownMenuItem>
                             {fund.status !== "archived" && (
                               <DropdownMenuItem asChild>
-                                <Link to={createPageUrl(`FundDetail?id=${fund.id}&edit=true`)}>
+                                <Link to={orgPrefix + createPageUrl(`FundDetail?id=${fund.id}&edit=true`)}>
                                   <DollarSign className="w-4 h-4 mr-2" /> Edit Fund
                                 </Link>
                               </DropdownMenuItem>

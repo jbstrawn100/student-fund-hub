@@ -38,10 +38,11 @@ import {
   Clock
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 
 export default function Queue() {
   const orgFilter = useOrgFilter();
+  const orgPrefix = useOrgPrefix();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("my_assigned");
@@ -266,7 +267,7 @@ export default function Queue() {
               {filteredRequests.map((request) => (
                 <Link
                   key={request.id}
-                  to={createPageUrl(`ReviewRequest?id=${request.id}`)}
+                  to={orgPrefix + createPageUrl(`ReviewRequest?id=${request.id}`)}
                   className="block p-4 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -344,7 +345,7 @@ export default function Queue() {
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="sm" asChild>
-                            <Link to={createPageUrl(`ReviewRequest?id=${request.id}`)}>
+                            <Link to={orgPrefix + createPageUrl(`ReviewRequest?id=${request.id}`)}>
                               <ArrowRight className="w-4 h-4" />
                             </Link>
                           </Button>

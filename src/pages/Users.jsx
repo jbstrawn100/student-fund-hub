@@ -53,7 +53,7 @@ import {
   UserCheck
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 import { useOrganization } from "@/components/OrganizationContext";
 
 const roleColors = {

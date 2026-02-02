@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, DollarSign, PieChart, TrendingUp, FileText, CheckCircle, XCircle, Clock, Wallet } from "lucide-react";
 import { format, startOfMonth, parseISO } from "date-fns";
 import { BarChart, Bar, PieChart as RechartPie, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 
 export default function Reports() {
   const orgFilter = useOrgFilter();

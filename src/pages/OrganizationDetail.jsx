@@ -107,7 +107,7 @@ export default function OrganizationDetail() {
 
       <PageHeader
         title={org.org_name}
-        description={`${org.subdomain}.app.com`}
+        description={`app.com/${org.subdomain}`}
         actions={
           <div className="flex gap-2">
             {editMode ? (
@@ -263,9 +263,9 @@ export default function OrganizationDetail() {
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-slate-500">Subdomain</Label>
+                    <Label className="text-slate-500">URL Path</Label>
                     <p className="mt-1 font-mono text-sm bg-slate-100 px-3 py-2 rounded">
-                      {org.subdomain}.app.com
+                      app.com/{org.subdomain}
                     </p>
                   </div>
                   <div>

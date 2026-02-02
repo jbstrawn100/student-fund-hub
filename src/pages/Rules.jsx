@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GitBranch, Plus, Settings, AlertCircle } from "lucide-react";
 import RuleBuilder from "@/components/rules/RuleBuilder";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 
 export default function Rules() {
   const orgFilter = useOrgFilter();

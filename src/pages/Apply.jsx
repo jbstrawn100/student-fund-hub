@@ -47,7 +47,7 @@ import {
   File
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 import { useOrganization } from "@/components/OrganizationContext";
 
 const USE_CATEGORIES = [
@@ -76,6 +76,7 @@ export default function Apply() {
   const navigate = useNavigate();
   const { organization } = useOrganization();
   const orgFilter = useOrgFilter();
+  const orgPrefix = useOrgPrefix();
   const [user, setUser] = useState(null);
   const [selectedFund, setSelectedFund] = useState(null);
   const [formData, setFormData] = useState({
@@ -297,7 +298,7 @@ export default function Apply() {
 
     await base44.entities.FundRequest.create(requestData);
 
-    navigate(createPageUrl("MyRequests"));
+    navigate(orgPrefix + createPageUrl("MyRequests"));
   };
 
   const handleSubmit = async () => {
@@ -416,7 +417,7 @@ export default function Apply() {
     });
 
     setShowConfirmModal(false);
-    navigate(createPageUrl(`RequestDetail?id=${newRequest.id}`));
+    navigate(orgPrefix + createPageUrl(`RequestDetail?id=${newRequest.id}`));
   };
 
   if (!user) {

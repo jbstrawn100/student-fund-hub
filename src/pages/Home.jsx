@@ -20,7 +20,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -50,6 +50,7 @@ export default function Home() {
 
 function StudentDashboard({ user }) {
   const orgFilter = useOrgFilter();
+  const orgPrefix = useOrgPrefix();
 
   const { data: myRequests = [], isLoading } = useQuery({
     queryKey: ["myRequests", user.id, orgFilter],
@@ -81,7 +82,7 @@ function StudentDashboard({ user }) {
         description="Track your fund requests and apply for available funds"
         actions={
           <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-500/25">
-            <Link to={createPageUrl("Apply")}>
+            <Link to={orgPrefix + createPageUrl("Apply")}>
               <PlusCircle className="w-4 h-4 mr-2" />
               Apply for Fund
             </Link>
@@ -123,7 +124,7 @@ function StudentDashboard({ user }) {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Recent Requests</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link to={createPageUrl("MyRequests")} className="text-indigo-600">
+              <Link to={orgPrefix + createPageUrl("MyRequests")} className="text-indigo-600">
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
@@ -142,7 +143,7 @@ function StudentDashboard({ user }) {
                 {recentRequests.map((request) => (
                   <Link
                     key={request.id}
-                    to={createPageUrl(`RequestDetail?id=${request.id}`)}
+                    to={orgPrefix + createPageUrl(`RequestDetail?id=${request.id}`)}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors group"
                   >
                     <div className="flex-1 min-w-0">
@@ -180,7 +181,7 @@ function StudentDashboard({ user }) {
                 {activeFunds.slice(0, 5).map((fund) => (
                   <Link
                     key={fund.id}
-                    to={createPageUrl(`Apply?fund=${fund.id}`)}
+                    to={orgPrefix + createPageUrl(`Apply?fund=${fund.id}`)}
                     className="block p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all group"
                   >
                     <p className="font-medium text-slate-800 group-hover:text-indigo-600">
@@ -207,6 +208,7 @@ function StudentDashboard({ user }) {
 
 function StaffDashboard({ user }) {
   const orgFilter = useOrgFilter();
+  const orgPrefix = useOrgPrefix();
 
   const { data: allRequests = [], isLoading } = useQuery({
     queryKey: ["allRequests", orgFilter],
@@ -244,7 +246,7 @@ function StaffDashboard({ user }) {
         description="Overview of fund requests and disbursements"
         actions={
           <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-            <Link to={createPageUrl("Queue")}>
+            <Link to={orgPrefix + createPageUrl("Queue")}>
               View Queue <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
@@ -285,7 +287,7 @@ function StaffDashboard({ user }) {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Requests Needing Attention</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link to={createPageUrl("Queue")} className="text-indigo-600">
+              <Link to={orgPrefix + createPageUrl("Queue")} className="text-indigo-600">
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
@@ -304,7 +306,7 @@ function StaffDashboard({ user }) {
                 {pendingRequests.map((request) => (
                   <Link
                     key={request.id}
-                    to={createPageUrl(`ReviewRequest?id=${request.id}`)}
+                    to={orgPrefix + createPageUrl(`ReviewRequest?id=${request.id}`)}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors group"
                   >
                     <div className="flex-1 min-w-0">
@@ -331,7 +333,7 @@ function StaffDashboard({ user }) {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Fund Overview</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link to={createPageUrl("Funds")} className="text-indigo-600">
+              <Link to={orgPrefix + createPageUrl("Funds")} className="text-indigo-600">
                 Manage
               </Link>
             </Button>

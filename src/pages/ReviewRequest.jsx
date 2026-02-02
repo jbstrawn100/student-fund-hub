@@ -44,11 +44,13 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useOrganization } from "@/components/OrganizationContext";
+import { useOrgPrefix } from "@/components/useOrgFilter";
 
 export default function ReviewRequest() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { organization } = useOrganization();
+  const orgPrefix = useOrgPrefix();
   const [user, setUser] = useState(null);
   const [reviewComments, setReviewComments] = useState("");
   const [decision, setDecision] = useState("");
@@ -244,7 +246,7 @@ export default function ReviewRequest() {
           type: notifConfig.type,
           title: notifConfig.title,
           message: message,
-          link: createPageUrl(`RequestDetail?id=${requestId}`),
+          link: orgPrefix + createPageUrl(`RequestDetail?id=${requestId}`),
           related_entity_type: "FundRequest",
           related_entity_id: requestId,
           email_sent: true
@@ -337,7 +339,7 @@ export default function ReviewRequest() {
       type: "paid",
       title: isPaidInFull ? "Payment Processed ✓" : "Partial Payment Processed",
       message: `${isPaidInFull ? "Your full payment" : `A payment of $${amountPaid.toLocaleString()}`} for ${request.fund_name} has been processed via ${disbursementData.payment_method}.`,
-      link: createPageUrl(`RequestDetail?id=${requestId}`),
+      link: orgPrefix + createPageUrl(`RequestDetail?id=${requestId}`),
       related_entity_type: "FundRequest",
       related_entity_id: requestId,
       email_sent: true
@@ -376,7 +378,7 @@ export default function ReviewRequest() {
       <div className="text-center py-16">
         <p className="text-slate-500">Request not found</p>
         <Button asChild className="mt-4">
-          <Link to={createPageUrl("Queue")}>Back to Queue</Link>
+          <Link to={orgPrefix + createPageUrl("Queue")}>Back to Queue</Link>
         </Button>
       </div>
     );
@@ -410,7 +412,7 @@ export default function ReviewRequest() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={createPageUrl("Queue")}>
+          <Link to={orgPrefix + createPageUrl("Queue")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Queue
           </Link>
