@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tantml:react-query";
 import StatusTimeline from "@/components/requests/StatusTimeline";
 import StatusBadge from "@/components/shared/StatusBadge";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
@@ -30,10 +30,12 @@ import {
   File
 } from "lucide-react";
 import { format } from "date-fns";
+import { useOrganization } from "@/components/OrganizationContext";
 
 export default function RequestDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { organization } = useOrganization();
   const [user, setUser] = useState(null);
   const [response, setResponse] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -75,6 +77,7 @@ export default function RequestDetail() {
 
     // Add student response as a review
     await base44.entities.Review.create({
+      organization_id: organization.id,
       fund_request_id: requestId,
       reviewer_user_id: user.id,
       reviewer_name: user.full_name,
@@ -91,6 +94,7 @@ export default function RequestDetail() {
 
     // Create audit log
     await base44.entities.AuditLog.create({
+      organization_id: organization.id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "STUDENT_RESPONSE",

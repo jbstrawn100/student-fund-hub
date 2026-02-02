@@ -46,6 +46,7 @@ import {
   X
 } from "lucide-react";
 import { format } from "date-fns";
+import { useOrganization } from "@/components/OrganizationContext";
 
 const USE_CATEGORIES = [
   "Tuition/Fees",
@@ -61,6 +62,7 @@ const USE_CATEGORIES = [
 export default function FundDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { organization } = useOrganization();
   const [user, setUser] = useState(null);
   const urlParams = new URLSearchParams(window.location.search);
   const fundId = urlParams.get("id");
@@ -146,6 +148,7 @@ export default function FundDetail() {
 
     // Create audit log
     await base44.entities.AuditLog.create({
+      organization_id: organization.id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "FUND_UPDATED",

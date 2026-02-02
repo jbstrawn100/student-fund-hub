@@ -43,10 +43,12 @@ import {
   Upload
 } from "lucide-react";
 import { format } from "date-fns";
+import { useOrganization } from "@/components/OrganizationContext";
 
 export default function ReviewRequest() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { organization } = useOrganization();
   const [user, setUser] = useState(null);
   const [reviewComments, setReviewComments] = useState("");
   const [decision, setDecision] = useState("");
@@ -195,6 +197,7 @@ export default function ReviewRequest() {
 
     // Create audit log
     await base44.entities.AuditLog.create({
+      organization_id: organization.id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: `REVIEW_${decision.toUpperCase().replace(" ", "_")}`,
@@ -235,6 +238,7 @@ export default function ReviewRequest() {
 
       if (message) {
         await base44.entities.Notification.create({
+          organization_id: organization.id,
           user_id: request.student_user_id,
           user_email: request.student_email,
           type: notifConfig.type,
@@ -277,6 +281,7 @@ export default function ReviewRequest() {
     const amountPaid = parseFloat(disbursementData.amount_paid);
 
     await base44.entities.Disbursement.create({
+      organization_id: organization.id,
       fund_request_id: requestId,
       fund_id: request.fund_id,
       fund_name: request.fund_name,
@@ -308,6 +313,7 @@ export default function ReviewRequest() {
 
     // Create audit log
     await base44.entities.AuditLog.create({
+      organization_id: organization.id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "DISBURSEMENT_CREATED",
@@ -325,6 +331,7 @@ export default function ReviewRequest() {
     // Notify student about payment
     const isPaidInFull = newStatus === "Paid";
     await base44.entities.Notification.create({
+      organization_id: organization.id,
       user_id: request.student_user_id,
       user_email: request.student_email,
       type: "paid",
@@ -376,8 +383,10 @@ export default function ReviewRequest() {
   }
 
   // Check if current user can review this request
+  const userRole = user?.staff_role || user?.app_role || "student";
+  
   const currentReview = reviews.find(r => 
-    (r.reviewer_user_id === user.id || r.reviewer_user_id === `role_${user.app_role}`) &&
+    (r.reviewer_user_id === user.id || r.reviewer_user_id === `role_${userRole}`) &&
     r.decision === "Pending" &&
     r.step_order === request.current_step_order
   );
@@ -388,7 +397,7 @@ export default function ReviewRequest() {
   const maxStepOrder = Math.max(...reviews.map(r => r.step_order || 0), 0);
   const isFinalStep = currentReview?.step_order === maxStepOrder;
   
-  const canDisburse = request.status === "Approved" && ["fund_manager", "admin"].includes(user.app_role);
+  const canDisburse = request.status === "Approved" && ["fund_manager", "admin"].includes(userRole);
 
   // Get internal comments (reviews with comments)
   const internalComments = reviews.filter(r => r.comments && r.comments.trim());

@@ -10,8 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GitBranch, Plus, Settings, AlertCircle } from "lucide-react";
 import RuleBuilder from "@/components/rules/RuleBuilder";
+import { useOrgFilter } from "@/components/useOrgFilter";
 
 export default function Rules() {
+  const orgFilter = useOrgFilter();
   const [user, setUser] = useState(null);
   const [selectedFundId, setSelectedFundId] = useState("");
   const [showBuilder, setShowBuilder] = useState(false);
@@ -27,14 +29,15 @@ export default function Rules() {
   };
 
   const { data: funds = [] } = useQuery({
-    queryKey: ["allFunds"],
-    queryFn: () => base44.entities.Fund.list("-created_date"),
+    queryKey: ["allFunds", orgFilter],
+    queryFn: () => base44.entities.Fund.filter(orgFilter, "-created_date"),
+    enabled: !!orgFilter,
   });
 
   const { data: rules = [] } = useQuery({
-    queryKey: ["fundRules", selectedFundId],
-    queryFn: () => base44.entities.RoutingRule.filter({ fund_id: selectedFundId }, "step_order"),
-    enabled: !!selectedFundId,
+    queryKey: ["fundRules", selectedFundId, orgFilter],
+    queryFn: () => base44.entities.RoutingRule.filter({ ...orgFilter, fund_id: selectedFundId }, "step_order"),
+    enabled: !!selectedFundId && !!orgFilter,
   });
 
   const selectedFund = funds.find(f => f.id === selectedFundId);
