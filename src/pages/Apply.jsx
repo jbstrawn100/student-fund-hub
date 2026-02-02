@@ -50,7 +50,7 @@ import { format } from "date-fns";
 import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
 import { useOrganization } from "@/components/OrganizationContext";
 
-const USE_CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   "Tuition/Fees",
   "Books/Supplies",
   "Housing",
@@ -529,6 +529,27 @@ export default function Apply() {
   }
 
   // Application Form
+  // Get fund configuration
+  const fundCategories = selectedFund?.custom_categories && selectedFund.custom_categories.length > 0
+    ? selectedFund.custom_categories
+    : DEFAULT_CATEGORIES;
+
+  const fundFields = selectedFund?.application_fields && selectedFund.application_fields.length > 0
+    ? selectedFund.application_fields
+    : [
+        { id: "student_full_name", label: "Full Name", required: true },
+        { id: "student_email", label: "Email", required: true },
+        { id: "student_phone", label: "Phone Number", required: false },
+        { id: "requested_amount", label: "Requested Amount", required: true },
+        { id: "intended_use_category", label: "Use Category", required: true },
+        { id: "intended_use_description", label: "Use Description", required: true },
+        { id: "justification_paragraph", label: "Justification", required: true },
+        { id: "attachments", label: "File Attachments", required: false }
+      ];
+
+  const isFieldVisible = (fieldId) => fundFields.some(f => f.id === fieldId);
+  const isFieldRequired = (fieldId) => fundFields.find(f => f.id === fieldId)?.required || false;
+
   // Check category restrictions
   const isCategoryAllowed = !selectedFund?.allowed_categories || 
     selectedFund.allowed_categories.length === 0 ||
@@ -541,9 +562,10 @@ export default function Apply() {
     parseFloat(formData.requested_amount) > 0 &&
     formData.intended_use_category &&
     isCategoryAllowed &&
-    formData.intended_use_description?.length >= 30 &&
-    formData.justification_paragraph?.length >= 100 &&
-    (!selectedFund?.requires_attachments || formData.attachments.length > 0) &&
+    (!isFieldRequired("intended_use_description") || formData.intended_use_description?.length >= 30) &&
+    (!isFieldRequired("justification_paragraph") || formData.justification_paragraph?.length >= 100) &&
+    (!isFieldRequired("student_phone") || formData.student_phone) &&
+    (!isFieldRequired("attachments") || formData.attachments.length > 0) &&
     Object.keys(errors).length === 0;
 
   return (
@@ -596,47 +618,55 @@ export default function Apply() {
             </p>
             
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="fullName">
-                  Full Name * 
-                  {errors.student_full_name && (
-                    <span className="text-red-600 text-xs ml-2">{errors.student_full_name}</span>
-                  )}
-                </Label>
-                <Input
-                  id="fullName"
-                  value={formData.student_full_name}
-                  onChange={(e) => handleInputChange("student_full_name", e.target.value)}
-                  className={errors.student_full_name ? "border-red-500" : ""}
-                />
-              </div>
+              {isFieldVisible("student_full_name") && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">
+                    Full Name {isFieldRequired("student_full_name") && "*"}
+                    {errors.student_full_name && (
+                      <span className="text-red-600 text-xs ml-2">{errors.student_full_name}</span>
+                    )}
+                  </Label>
+                  <Input
+                    id="fullName"
+                    value={formData.student_full_name}
+                    onChange={(e) => handleInputChange("student_full_name", e.target.value)}
+                    className={errors.student_full_name ? "border-red-500" : ""}
+                  />
+                </div>
+              )}
 
-              <div className="space-y-2">
-                <Label htmlFor="email">
-                  Email *
-                  {errors.student_email && (
-                    <span className="text-red-600 text-xs ml-2">{errors.student_email}</span>
-                  )}
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.student_email}
-                  onChange={(e) => handleInputChange("student_email", e.target.value)}
-                  className={errors.student_email ? "border-red-500" : ""}
-                />
-              </div>
+              {isFieldVisible("student_email") && (
+                <div className="space-y-2">
+                  <Label htmlFor="email">
+                    Email {isFieldRequired("student_email") && "*"}
+                    {errors.student_email && (
+                      <span className="text-red-600 text-xs ml-2">{errors.student_email}</span>
+                    )}
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.student_email}
+                    onChange={(e) => handleInputChange("student_email", e.target.value)}
+                    className={errors.student_email ? "border-red-500" : ""}
+                  />
+                </div>
+              )}
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.student_phone}
-                  onChange={(e) => handleInputChange("student_phone", e.target.value)}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
+              {isFieldVisible("student_phone") && (
+                <div className="space-y-2">
+                  <Label htmlFor="phone">
+                    Phone Number {isFieldRequired("student_phone") && "*"}
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.student_phone}
+                    onChange={(e) => handleInputChange("student_phone", e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -648,117 +678,126 @@ export default function Apply() {
             </h3>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">
-                  Requested Amount *
-                  {errors.requested_amount && (
-                    <span className="text-red-600 text-xs ml-2">{errors.requested_amount}</span>
+              {isFieldVisible("requested_amount") && (
+                <div className="space-y-2">
+                  <Label htmlFor="amount">
+                    Requested Amount {isFieldRequired("requested_amount") && "*"}
+                    {errors.requested_amount && (
+                      <span className="text-red-600 text-xs ml-2">{errors.requested_amount}</span>
+                    )}
+                  </Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      id="amount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      className={`pl-9 ${errors.requested_amount ? "border-red-500" : ""}`}
+                      value={formData.requested_amount}
+                      onChange={(e) => handleInputChange("requested_amount", e.target.value)}
+                    />
+                  </div>
+                  {selectedFund.max_request_amount && (
+                    <p className="text-xs text-slate-500">
+                      Maximum allowed: ${selectedFund.max_request_amount.toLocaleString()}
+                    </p>
                   )}
-                </Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    id="amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    className={`pl-9 ${errors.requested_amount ? "border-red-500" : ""}`}
-                    value={formData.requested_amount}
-                    onChange={(e) => handleInputChange("requested_amount", e.target.value)}
-                  />
                 </div>
-                {selectedFund.max_request_amount && (
-                  <p className="text-xs text-slate-500">
-                    Maximum allowed: ${selectedFund.max_request_amount.toLocaleString()}
-                  </p>
-                )}
-              </div>
+              )}
 
+              {isFieldVisible("intended_use_category") && (
+                <div className="space-y-2">
+                  <Label htmlFor="category">
+                    Intended Use Category {isFieldRequired("intended_use_category") && "*"}
+                    {errors.intended_use_category && (
+                      <span className="text-red-600 text-xs ml-2">{errors.intended_use_category}</span>
+                    )}
+                  </Label>
+                  <Select
+                    value={formData.intended_use_category}
+                    onValueChange={(value) => handleInputChange("intended_use_category", value)}
+                  >
+                    <SelectTrigger className={errors.intended_use_category ? "border-red-500" : ""}>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(selectedFund?.allowed_categories && selectedFund.allowed_categories.length > 0
+                        ? selectedFund.allowed_categories
+                        : fundCategories
+                      ).map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedFund?.allowed_categories && selectedFund.allowed_categories.length > 0 && (
+                    <p className="text-xs text-slate-500">
+                      Only selected categories are allowed for this fund
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {isFieldVisible("intended_use_description") && (
               <div className="space-y-2">
-                <Label htmlFor="category">
-                  Intended Use Category *
-                  {errors.intended_use_category && (
-                    <span className="text-red-600 text-xs ml-2">{errors.intended_use_category}</span>
+                <Label htmlFor="useDescription">
+                  How will you use these funds? {isFieldRequired("intended_use_description") && "*"} (minimum 30 characters)
+                  {errors.intended_use_description && (
+                    <span className="text-red-600 text-xs ml-2">{errors.intended_use_description}</span>
                   )}
                 </Label>
-                <Select
-                  value={formData.intended_use_category}
-                  onValueChange={(value) => handleInputChange("intended_use_category", value)}
-                >
-                  <SelectTrigger className={errors.intended_use_category ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(selectedFund?.allowed_categories && selectedFund.allowed_categories.length > 0
-                      ? selectedFund.allowed_categories
-                      : USE_CATEGORIES
-                    ).map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedFund?.allowed_categories && selectedFund.allowed_categories.length > 0 && (
-                  <p className="text-xs text-slate-500">
-                    Only selected categories are allowed for this fund
-                  </p>
-                )}
+                <Textarea
+                  id="useDescription"
+                  placeholder="Provide a detailed description of how you plan to use these funds..."
+                  rows={4}
+                  value={formData.intended_use_description}
+                  onChange={(e) => handleInputChange("intended_use_description", e.target.value)}
+                  className={errors.intended_use_description ? "border-red-500" : ""}
+                />
+                <p className="text-xs text-slate-500">
+                  {formData.intended_use_description.length} / 30 characters minimum
+                </p>
               </div>
-            </div>
+            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="useDescription">
-                How will you use these funds? * (minimum 30 characters)
-                {errors.intended_use_description && (
-                  <span className="text-red-600 text-xs ml-2">{errors.intended_use_description}</span>
-                )}
-              </Label>
-              <Textarea
-                id="useDescription"
-                placeholder="Provide a detailed description of how you plan to use these funds..."
-                rows={4}
-                value={formData.intended_use_description}
-                onChange={(e) => handleInputChange("intended_use_description", e.target.value)}
-                className={errors.intended_use_description ? "border-red-500" : ""}
-              />
-              <p className="text-xs text-slate-500">
-                {formData.intended_use_description.length} / 30 characters minimum
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="justification">
-                Why do you deserve these funds? * (minimum 100 characters)
-                {errors.justification_paragraph && (
-                  <span className="text-red-600 text-xs ml-2">{errors.justification_paragraph}</span>
-                )}
-              </Label>
-              <Textarea
-                id="justification"
-                placeholder="Explain your situation, why you need this assistance, and how it will help you succeed..."
-                rows={6}
-                value={formData.justification_paragraph}
-                onChange={(e) => handleInputChange("justification_paragraph", e.target.value)}
-                className={errors.justification_paragraph ? "border-red-500" : ""}
-              />
-              <p className="text-xs text-slate-500">
-                {formData.justification_paragraph.length} / 100 characters minimum
-              </p>
-            </div>
+            {isFieldVisible("justification_paragraph") && (
+              <div className="space-y-2">
+                <Label htmlFor="justification">
+                  Why do you deserve these funds? {isFieldRequired("justification_paragraph") && "*"} (minimum 100 characters)
+                  {errors.justification_paragraph && (
+                    <span className="text-red-600 text-xs ml-2">{errors.justification_paragraph}</span>
+                  )}
+                </Label>
+                <Textarea
+                  id="justification"
+                  placeholder="Explain your situation, why you need this assistance, and how it will help you succeed..."
+                  rows={6}
+                  value={formData.justification_paragraph}
+                  onChange={(e) => handleInputChange("justification_paragraph", e.target.value)}
+                  className={errors.justification_paragraph ? "border-red-500" : ""}
+                />
+                <p className="text-xs text-slate-500">
+                  {formData.justification_paragraph.length} / 100 characters minimum
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Attachments */}
-          <div className="space-y-4 pt-4 border-t">
-            <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-              <Paperclip className="w-4 h-4" />
-              Supporting Documents {selectedFund?.requires_attachments && <span className="text-red-600">*</span>}
-            </h3>
-            <p className="text-sm text-slate-500">
-              Upload any supporting documents (PDF, JPG, PNG, DOC - max 10MB per file)
-              {selectedFund?.requires_attachments && (
-                <span className="text-amber-600 font-medium"> - Required for this fund</span>
-              )}
-            </p>
+          {isFieldVisible("attachments") && (
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                <Paperclip className="w-4 h-4" />
+                Supporting Documents {isFieldRequired("attachments") && <span className="text-red-600">*</span>}
+              </h3>
+              <p className="text-sm text-slate-500">
+                Upload any supporting documents (PDF, JPG, PNG, DOC - max 10MB per file)
+                {isFieldRequired("attachments") && (
+                  <span className="text-amber-600 font-medium"> - Required for this fund</span>
+                )}
+              </p>
 
             <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-300 transition-colors">
               <input
@@ -811,7 +850,8 @@ export default function Apply() {
                 ))}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6 border-t">

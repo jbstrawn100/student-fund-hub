@@ -11,14 +11,27 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import PageHeader from "@/components/shared/PageHeader";
+import FieldSelector from "@/components/funds/FieldSelector";
+import CategoryManager from "@/components/funds/CategoryManager";
 import { DollarSign, Save, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOrganization } from "@/components/OrganizationContext";
 import { useOrgPrefix } from "@/components/useOrgFilter";
 
-const USE_CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   "Tuition/Fees", "Books/Supplies", "Housing", "Food",
   "Transportation", "Medical", "Technology", "Other"
+];
+
+const DEFAULT_FIELDS = [
+  { id: "student_full_name", label: "Full Name", required: true },
+  { id: "student_email", label: "Email", required: true },
+  { id: "student_phone", label: "Phone Number", required: false },
+  { id: "requested_amount", label: "Requested Amount", required: true },
+  { id: "intended_use_category", label: "Use Category", required: true },
+  { id: "intended_use_description", label: "Use Description", required: true },
+  { id: "justification_paragraph", label: "Justification", required: true },
+  { id: "attachments", label: "File Attachments", required: false }
 ];
 
 export default function CreateFund() {
@@ -36,6 +49,8 @@ export default function CreateFund() {
     max_request_amount: "",
     requires_attachments: false,
     allowed_categories: [],
+    custom_categories: DEFAULT_CATEGORIES,
+    application_fields: DEFAULT_FIELDS,
     budget_enforcement: "warn",
     status: "active"
   });
@@ -64,6 +79,14 @@ export default function CreateFund() {
     }
   };
 
+  const handleFieldsChange = (fields) => {
+    setFormData({ ...formData, application_fields: fields });
+  };
+
+  const handleCategoriesChange = (categories) => {
+    setFormData({ ...formData, custom_categories: categories });
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
 
@@ -79,6 +102,8 @@ export default function CreateFund() {
       max_request_amount: formData.max_request_amount ? parseFloat(formData.max_request_amount) : null,
       requires_attachments: formData.requires_attachments,
       allowed_categories: formData.allowed_categories.length > 0 ? formData.allowed_categories : null,
+      custom_categories: formData.custom_categories,
+      application_fields: formData.application_fields,
       budget_enforcement: formData.budget_enforcement,
       status: formData.status,
       fund_owner_id: user.id,
@@ -227,39 +252,27 @@ export default function CreateFund() {
             </div>
           </div>
 
-          {/* Constraints */}
+          {/* Application Form Configuration */}
           <div className="space-y-4 pt-4 border-t">
-            <h3 className="font-semibold text-slate-800">Application Constraints</h3>
+            <h3 className="font-semibold text-slate-800">Application Form Configuration</h3>
             
-            <div className="space-y-2">
-              <Label>Maximum Request Amount (Optional)</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  type="number"
-                  className="pl-9"
-                  placeholder="No limit"
-                  value={formData.max_request_amount}
-                  onChange={(e) => setFormData({ ...formData, max_request_amount: e.target.value })}
-                />
-              </div>
-            </div>
+            <FieldSelector
+              selectedFields={formData.application_fields}
+              onFieldsChange={handleFieldsChange}
+            />
 
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <div>
-                <Label className="text-sm">Require Attachments</Label>
-                <p className="text-xs text-slate-500">Students must upload supporting documents</p>
-              </div>
-              <Switch
-                checked={formData.requires_attachments}
-                onCheckedChange={(checked) => setFormData({ ...formData, requires_attachments: checked })}
-              />
-            </div>
+            <CategoryManager
+              categories={formData.custom_categories}
+              onCategoriesChange={handleCategoriesChange}
+            />
 
             <div className="space-y-2">
-              <Label>Allowed Categories (Leave empty for all)</Label>
+              <Label>Restrict to Specific Categories (Optional)</Label>
+              <p className="text-xs text-slate-500 mb-2">
+                Leave empty to allow all categories defined above
+              </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {USE_CATEGORIES.map((category) => (
+                {formData.custom_categories.map((category) => (
                   <Button
                     key={category}
                     type="button"
@@ -280,6 +293,20 @@ export default function CreateFund() {
                     <span className="text-xs">{category.split("/")[0]}</span>
                   </Button>
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Maximum Request Amount (Optional)</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  type="number"
+                  className="pl-9"
+                  placeholder="No limit"
+                  value={formData.max_request_amount}
+                  onChange={(e) => setFormData({ ...formData, max_request_amount: e.target.value })}
+                />
               </div>
             </div>
           </div>
