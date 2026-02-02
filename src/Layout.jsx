@@ -88,7 +88,11 @@ function LayoutContent({ children, currentPageName }) {
     ] : []),
   ];
 
-  const navItems = isSuperAdmin ? superAdminNavItems : (isStaff ? staffNavItems : studentNavItems);
+  // If super admin is viewing an organization, show org-specific nav
+  // Otherwise if super admin without org context, show super admin nav
+  const navItems = isSuperAdmin && !organization 
+    ? superAdminNavItems 
+    : (isStaff ? staffNavItems : studentNavItems);
 
   if (loading) {
     return (
