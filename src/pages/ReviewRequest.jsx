@@ -907,7 +907,14 @@ export default function ReviewRequest() {
             </Button>
             <Button
               onClick={submitDisbursement}
-              disabled={!disbursementData.amount_paid || !disbursementData.payment_method || submitting}
+              disabled={
+                !disbursementData.amount_paid || 
+                !disbursementData.paid_at ||
+                !disbursementData.payment_method || 
+                parseFloat(disbursementData.amount_paid) > remainingToDisburse ||
+                parseFloat(disbursementData.amount_paid) <= 0 ||
+                submitting
+              }
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {submitting ? <LoadingSpinner size="sm" className="mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}

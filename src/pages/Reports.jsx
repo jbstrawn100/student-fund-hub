@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, DollarSign, PieChart, TrendingUp, FileText } from "lucide-react";
-import { format } from "date-fns";
+import { Download, DollarSign, PieChart, TrendingUp, FileText, CheckCircle, XCircle, Clock, Wallet } from "lucide-react";
+import { format, startOfMonth, parseISO } from "date-fns";
+import { BarChart, Bar, PieChart as RechartPie, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function Reports() {
   const [user, setUser] = useState(null);
@@ -40,8 +41,24 @@ export default function Reports() {
     queryFn: () => base44.entities.Disbursement.list("-paid_at"),
   });
 
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["allReviews"],
+    queryFn: () => base44.entities.Review.list(),
+  });
+
+  // Filter funds based on user role
+  const availableFunds = user?.app_role === "admin" 
+    ? funds 
+    : funds.filter(f => f.fund_owner_id === user?.id);
+
   // Filter data
   const filteredRequests = requests.filter(r => {
+    // Fund managers see only their funds (unless admin)
+    if (user?.app_role !== "admin") {
+      const isMyFund = availableFunds.some(f => f.id === r.fund_id);
+      if (!isMyFund) return false;
+    }
+
     const fundMatch = selectedFund === "all" || r.fund_id === selectedFund;
     
     let dateMatch = true;
@@ -61,14 +78,29 @@ export default function Reports() {
   });
 
   const filteredDisbursements = disbursements.filter(d => {
+    if (user?.app_role !== "admin") {
+      const isMyFund = availableFunds.some(f => f.id === d.fund_id);
+      if (!isMyFund) return false;
+    }
     return selectedFund === "all" || d.fund_id === selectedFund;
   });
 
   // Calculate stats
+  const totalBudget = selectedFund === "all" 
+    ? availableFunds.reduce((sum, f) => sum + (f.total_budget || 0), 0)
+    : availableFunds.find(f => f.id === selectedFund)?.total_budget || 0;
+
   const totalRequested = filteredRequests.reduce((sum, r) => sum + (r.requested_amount || 0), 0);
   const totalApproved = filteredRequests.filter(r => ["Approved", "Paid"].includes(r.status))
     .reduce((sum, r) => sum + (r.requested_amount || 0), 0);
   const totalDisbursed = filteredDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0);
+  const remaining = totalBudget - totalDisbursed;
+
+  const submittedCount = filteredRequests.filter(r => r.status !== "Draft").length;
+  const approvedCount = filteredRequests.filter(r => ["Approved", "Paid"].includes(r.status)).length;
+  const deniedCount = filteredRequests.filter(r => r.status === "Denied").length;
+  const paidCount = filteredRequests.filter(r => r.status === "Paid").length;
+  const avgRequested = submittedCount > 0 ? totalRequested / submittedCount : 0;
 
   // Usage by category
   const usageByCategory = {};
@@ -91,26 +123,56 @@ export default function Reports() {
     }
   });
 
+  // Chart data - spend over time (monthly)
+  const spendByMonth = {};
+  filteredDisbursements.forEach(d => {
+    const monthKey = format(parseISO(d.paid_at), "MMM yyyy");
+    if (!spendByMonth[monthKey]) {
+      spendByMonth[monthKey] = 0;
+    }
+    spendByMonth[monthKey] += d.amount_paid || 0;
+  });
+  
+  const spendOverTimeData = Object.entries(spendByMonth)
+    .map(([month, amount]) => ({ month, amount }))
+    .slice(-6); // Last 6 months
+
+  // Approved vs Denied data
+  const approvalData = [
+    { name: "Approved", value: approvedCount, color: "#10b981" },
+    { name: "Denied", value: deniedCount, color: "#ef4444" },
+    { name: "Pending", value: submittedCount - approvedCount - deniedCount, color: "#f59e0b" }
+  ].filter(d => d.value > 0);
+
   // Export to CSV
   const exportToCSV = () => {
     const csvRows = [
-      ["Request ID", "Student", "Fund", "Category", "Intended Use", "Amount Requested", "Status", "Amount Disbursed", "Submitted Date"]
+      ["Request ID", "Student Name", "Email", "Fund", "Category", "Intended Use", "Requested", "Approved", "Paid", "Status", "Submitted Date", "Decision Date"]
     ];
 
     filteredRequests.forEach(r => {
       const requestDisbursements = disbursements.filter(d => d.fund_request_id === r.id);
       const totalPaid = requestDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0);
+      const isApproved = ["Approved", "Paid"].includes(r.status);
+      const approvedAmount = isApproved ? r.requested_amount : 0;
+      
+      // Get decision date from reviews
+      const finalReview = reviews.filter(rev => rev.fund_request_id === r.id && ["Approved", "Denied"].includes(rev.decision))
+        .sort((a, b) => new Date(b.decided_at || 0) - new Date(a.decided_at || 0))[0];
       
       csvRows.push([
         r.request_id || "",
         r.student_full_name || "",
+        r.student_email || "",
         r.fund_name || "",
         r.intended_use_category || "",
-        `"${(r.intended_use_description || "").replace(/"/g, '""')}"`,
+        `"${(r.intended_use_description || "").replace(/"/g, '""').substring(0, 200)}"`,
         r.requested_amount || 0,
-        r.status || "",
+        approvedAmount,
         totalPaid,
-        r.submitted_at ? format(new Date(r.submitted_at), "yyyy-MM-dd") : ""
+        r.status || "",
+        r.submitted_at ? format(new Date(r.submitted_at), "yyyy-MM-dd") : "",
+        finalReview?.decided_at ? format(new Date(finalReview.decided_at), "yyyy-MM-dd") : ""
       ]);
     });
 
@@ -153,8 +215,10 @@ export default function Reports() {
                 <SelectValue placeholder="Select fund" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Funds</SelectItem>
-                {funds.map(f => (
+                <SelectItem value="all">
+                  {user?.app_role === "admin" ? "All Funds" : "All My Funds"}
+                </SelectItem>
+                {availableFunds.map(f => (
                   <SelectItem key={f.id} value={f.id}>{f.fund_name}</SelectItem>
                 ))}
               </SelectContent>
@@ -176,39 +240,146 @@ export default function Reports() {
       </Card>
 
       {/* Summary Stats */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-slate-500">Total Requested</p>
-              <DollarSign className="w-5 h-5 text-indigo-200" />
+              <p className="text-sm text-indigo-700 font-medium">Total Budget</p>
+              <Wallet className="w-5 h-5 text-indigo-400" />
             </div>
-            <p className="text-2xl font-bold">${totalRequested.toLocaleString()}</p>
-            <p className="text-sm text-slate-500 mt-1">{filteredRequests.length} requests</p>
+            <p className="text-3xl font-bold text-indigo-900">${totalBudget.toLocaleString()}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-slate-500">Total Approved</p>
-              <TrendingUp className="w-5 h-5 text-emerald-200" />
+              <p className="text-sm text-emerald-700 font-medium">Total Approved</p>
+              <CheckCircle className="w-5 h-5 text-emerald-400" />
             </div>
-            <p className="text-2xl font-bold text-emerald-600">${totalApproved.toLocaleString()}</p>
-            <p className="text-sm text-slate-500 mt-1">
-              {((totalApproved / totalRequested) * 100 || 0).toFixed(1)}% approval rate
+            <p className="text-3xl font-bold text-emerald-900">${totalApproved.toLocaleString()}</p>
+            <p className="text-sm text-emerald-600 mt-1">{approvedCount} requests</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-violet-50 to-violet-100/50 border-violet-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-violet-700 font-medium">Total Paid</p>
+              <DollarSign className="w-5 h-5 text-violet-400" />
+            </div>
+            <p className="text-3xl font-bold text-violet-900">${totalDisbursed.toLocaleString()}</p>
+            <p className="text-sm text-violet-600 mt-1">{paidCount} paid</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-slate-50 to-slate-100/50 border-slate-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-slate-700 font-medium">Remaining</p>
+              <TrendingUp className="w-5 h-5 text-slate-400" />
+            </div>
+            <p className="text-3xl font-bold text-slate-900">${remaining.toLocaleString()}</p>
+            <p className="text-sm text-slate-600 mt-1">
+              {((remaining / totalBudget) * 100 || 0).toFixed(1)}% left
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Request Counts */}
+      <div className="grid md:grid-cols-4 gap-4">
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardContent className="p-4">
+            <p className="text-sm text-slate-500 mb-1">Submitted</p>
+            <p className="text-2xl font-bold">{submittedCount}</p>
+          </CardContent>
+        </Card>
 
         <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-slate-500">Total Disbursed</p>
-              <FileText className="w-5 h-5 text-violet-200" />
-            </div>
-            <p className="text-2xl font-bold text-violet-600">${totalDisbursed.toLocaleString()}</p>
-            <p className="text-sm text-slate-500 mt-1">{filteredDisbursements.length} payments</p>
+          <CardContent className="p-4">
+            <p className="text-sm text-slate-500 mb-1">Approved</p>
+            <p className="text-2xl font-bold text-emerald-600">{approvedCount}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardContent className="p-4">
+            <p className="text-sm text-slate-500 mb-1">Denied</p>
+            <p className="text-2xl font-bold text-red-600">{deniedCount}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardContent className="p-4">
+            <p className="text-sm text-slate-500 mb-1">Average Requested</p>
+            <p className="text-2xl font-bold">${avgRequested.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Spend Over Time */}
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <TrendingUp className="w-5 h-5" />
+              Spend Over Time
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {spendOverTimeData.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No disbursement data</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={spendOverTimeData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    formatter={(value) => `$${value.toLocaleString()}`}
+                    contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px" }}
+                  />
+                  <Line type="monotone" dataKey="amount" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: "#8b5cf6" }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Approved vs Denied */}
+        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <PieChart className="w-5 h-5" />
+              Request Outcomes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {approvalData.length === 0 ? (
+              <p className="text-slate-500 text-center py-8">No data</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={250}>
+                <RechartPie>
+                  <Pie
+                    data={approvalData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {approvalData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </RechartPie>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -217,43 +388,70 @@ export default function Reports() {
       <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <PieChart className="w-5 h-5" />
-            Usage by Category
+            <FileText className="w-5 h-5" />
+            Requests by Category
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Requests</TableHead>
-                <TableHead className="text-right">Requested</TableHead>
-                <TableHead className="text-right">Disbursed</TableHead>
-                <TableHead className="text-right">% of Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Object.entries(usageByCategory)
-                .sort((a, b) => b[1].total - a[1].total)
-                .map(([category, data]) => (
-                  <TableRow key={category}>
-                    <TableCell>
-                      <Badge variant="secondary">{category}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{data.count}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      ${data.total.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right text-violet-600 font-medium">
-                      ${data.disbursed.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {((data.total / totalRequested) * 100 || 0).toFixed(1)}%
-                    </TableCell>
+          {Object.keys(usageByCategory).length === 0 ? (
+            <p className="text-slate-500 text-center py-8">No data</p>
+          ) : (
+            <>
+              <div className="mb-6">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={Object.entries(usageByCategory).map(([cat, data]) => ({
+                    category: cat,
+                    requested: data.total,
+                    disbursed: data.disbursed
+                  }))}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="category" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" height={80} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip 
+                      formatter={(value) => `$${value.toLocaleString()}`}
+                      contentStyle={{ background: "white", border: "1px solid #e2e8f0", borderRadius: "8px" }}
+                    />
+                    <Legend />
+                    <Bar dataKey="requested" fill="#6366f1" name="Requested" />
+                    <Bar dataKey="disbursed" fill="#8b5cf6" name="Disbursed" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-right">Requests</TableHead>
+                    <TableHead className="text-right">Requested</TableHead>
+                    <TableHead className="text-right">Disbursed</TableHead>
+                    <TableHead className="text-right">% of Total</TableHead>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(usageByCategory)
+                    .sort((a, b) => b[1].total - a[1].total)
+                    .map(([category, data]) => (
+                      <TableRow key={category}>
+                        <TableCell>
+                          <Badge variant="secondary">{category}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">{data.count}</TableCell>
+                        <TableCell className="text-right font-medium">
+                          ${data.total.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right text-violet-600 font-medium">
+                          ${data.disbursed.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {((data.total / totalRequested) * 100 || 0).toFixed(1)}%
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </>
+          )}
         </CardContent>
       </Card>
 
