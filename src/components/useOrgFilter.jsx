@@ -22,3 +22,11 @@ export function useOrgData() {
     return { ...data, organization_id: organization.id };
   };
 }
+
+// Returns the organization prefix for URLs
+export function useOrgPrefix() {
+  const { organization, isSuperAdmin } = useOrganization();
+  
+  if (isSuperAdmin || !organization) return "";
+  return `/org/${organization.subdomain}`;
+}
