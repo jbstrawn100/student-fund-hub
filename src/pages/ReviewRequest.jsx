@@ -486,19 +486,23 @@ export default function ReviewRequest() {
                 <div>
                   <p className="text-sm text-slate-500 mb-2">Attachments</p>
                   <div className="space-y-2">
-                    {request.attachments.map((url, index) => (
-                      <a
-                        key={index}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-                      >
-                        <FileText className="w-4 h-4 text-indigo-600" />
-                        <span className="text-sm text-indigo-700 flex-1">Attachment {index + 1}</span>
-                        <ExternalLink className="w-4 h-4 text-indigo-400" />
-                      </a>
-                    ))}
+                    {request.attachments.map((attachment, index) => {
+                      const url = typeof attachment === 'string' ? attachment : attachment.url;
+                      const name = typeof attachment === 'object' && attachment.name ? attachment.name : `Attachment ${index + 1}`;
+                      return (
+                        <a
+                          key={index}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                        >
+                          <FileText className="w-4 h-4 text-indigo-600" />
+                          <span className="text-sm text-indigo-700 flex-1">{name}</span>
+                          <ExternalLink className="w-4 h-4 text-indigo-400" />
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               )}
