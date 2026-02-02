@@ -32,9 +32,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import NotificationBell from "@/components/notifications/NotificationBell";
 import OrganizationWrapper from "@/components/OrganizationWrapper";
 import { useOrganization } from "@/components/OrganizationContext";
+import { useOrgPrefix } from "@/components/useOrgFilter";
 
 function LayoutContent({ children, currentPageName }) {
   const { organization, isSuperAdmin } = useOrganization();
+  const orgPrefix = useOrgPrefix();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -126,7 +128,7 @@ function LayoutContent({ children, currentPageName }) {
           </div>
           <div className="flex items-center gap-2">
             {user && <NotificationBell user={user} />}
-            <UserDropdown user={user} handleLogout={handleLogout} />
+            <UserDropdown user={user} handleLogout={handleLogout} orgPrefix={orgPrefix} />
           </div>
         </div>
       </header>
@@ -174,7 +176,7 @@ function LayoutContent({ children, currentPageName }) {
               return (
                 <Link
                   key={item.page}
-                  to={createPageUrl(item.page)}
+                  to={orgPrefix + createPageUrl(item.page)}
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                     isActive
@@ -197,7 +199,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
             )}
             <div className="hidden lg:block">
-              <UserDropdown user={user} handleLogout={handleLogout} fullWidth />
+              <UserDropdown user={user} handleLogout={handleLogout} fullWidth orgPrefix={orgPrefix} />
             </div>
           </div>
         </div>
@@ -213,7 +215,9 @@ function LayoutContent({ children, currentPageName }) {
   );
 }
 
-function UserDropdown({ user, handleLogout, fullWidth }) {
+function UserDropdown({ user, handleLogout, fullWidth, orgPrefix }) {
+  const userRole = user?.staff_role || user?.app_role || "student";
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -230,7 +234,7 @@ function UserDropdown({ user, handleLogout, fullWidth }) {
             {fullWidth && (
               <div className="flex-1 text-left">
                 <p className="font-medium text-slate-800 text-sm">{user?.full_name || "User"}</p>
-                <p className="text-xs text-slate-500 capitalize">{user?.app_role || "student"}</p>
+                <p className="text-xs text-slate-500 capitalize">{userRole}</p>
               </div>
             )}
             <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -244,7 +248,7 @@ function UserDropdown({ user, handleLogout, fullWidth }) {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to={createPageUrl("Profile")} className="cursor-pointer">
+          <Link to={orgPrefix + createPageUrl("Profile")} className="cursor-pointer">
             <UserIcon className="w-4 h-4 mr-2" />
             Profile
           </Link>
