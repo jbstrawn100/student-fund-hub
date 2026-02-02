@@ -17,7 +17,8 @@ import {
   ChevronDown,
   User as UserIcon,
   Home,
-  FileSearch
+  FileSearch,
+  Building2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,8 +30,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import NotificationBell from "@/components/notifications/NotificationBell";
+import { useOrganization } from "@/components/OrganizationContext";
 
 export default function Layout({ children, currentPageName }) {
+  const { organization, isSuperAdmin } = useOrganization();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -55,10 +58,14 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.logout();
   };
 
-  const userRole = user?.app_role || "student";
+  const userRole = user?.staff_role || user?.app_role || "student";
   const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
   const isAdmin = userRole === "admin";
   const isFundManager = userRole === "fund_manager" || isAdmin;
+
+  const superAdminNavItems = [
+    { name: "Organizations", icon: Building2, page: "SuperAdminDashboard" },
+  ];
 
   const studentNavItems = [
     { name: "Dashboard", icon: Home, page: "Home" },
@@ -78,7 +85,7 @@ export default function Layout({ children, currentPageName }) {
     ] : []),
   ];
 
-  const navItems = isStaff ? staffNavItems : studentNavItems;
+  const navItems = isSuperAdmin ? superAdminNavItems : (isStaff ? staffNavItems : studentNavItems);
 
   if (loading) {
     return (
@@ -104,10 +111,16 @@ export default function Layout({ children, currentPageName }) {
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-semibold text-slate-800">Student Funds</span>
+              {organization?.logo_url ? (
+                <img src={organization.logo_url} alt={organization.org_name} className="w-8 h-8 rounded-lg object-cover" />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
+                  {isSuperAdmin ? <Building2 className="w-5 h-5 text-white" /> : <GraduationCap className="w-5 h-5 text-white" />}
+                </div>
+              )}
+              <span className="font-semibold text-slate-800">
+                {isSuperAdmin ? "Super Admin" : organization?.org_name || "Student Funds"}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -135,12 +148,20 @@ export default function Layout({ children, currentPageName }) {
           {/* Logo */}
           <div className="p-6 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                <GraduationCap className="w-6 h-6 text-white" />
-              </div>
+              {organization?.logo_url ? (
+                <img src={organization.logo_url} alt={organization.org_name} className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                  {isSuperAdmin ? <Building2 className="w-6 h-6 text-white" /> : <GraduationCap className="w-6 h-6 text-white" />}
+                </div>
+              )}
               <div>
-                <h1 className="font-bold text-slate-800 text-lg">Student Funds</h1>
-                <p className="text-xs text-slate-500 capitalize">{userRole} Portal</p>
+                <h1 className="font-bold text-slate-800 text-lg">
+                  {isSuperAdmin ? "Super Admin" : organization?.org_name || "Student Funds"}
+                </h1>
+                <p className="text-xs text-slate-500 capitalize">
+                  {isSuperAdmin ? "Platform Management" : `${userRole} Portal`}
+                </p>
               </div>
             </div>
           </div>
