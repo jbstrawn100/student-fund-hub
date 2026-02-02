@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import PageHeader from "@/components/shared/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Plus, Building2, MoreVertical, Users, FileText, DollarSign, Search, Eye } from "lucide-react";
+import { Plus, Building2, MoreVertical, Users, FileText, DollarSign, Search, Eye, ExternalLink } from "lucide-react";
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
@@ -177,7 +177,7 @@ export default function SuperAdminDashboard() {
                     </TableCell>
                     <TableCell>
                       <code className="text-xs bg-slate-100 px-2 py-1 rounded">
-                        {org.subdomain}.app.com
+                        /org/{org.subdomain}
                       </code>
                     </TableCell>
                     <TableCell>
@@ -208,6 +208,12 @@ export default function SuperAdminDashboard() {
                           <DropdownMenuItem onClick={() => navigate(createPageUrl(`OrganizationDetail?id=${org.id}`))}>
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to={`/org/${org.subdomain}`}>
+                              <ExternalLink className="w-4 h-4 mr-2" />
+                              Visit Portal
+                            </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleStatusToggle(org)}>
                             {org.status === "active" ? "Suspend" : "Activate"}
