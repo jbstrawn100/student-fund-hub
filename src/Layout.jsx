@@ -105,7 +105,7 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  // Super Admin Layout (no sidebar)
+  // Super Admin viewing global dashboard (no sidebar, top nav only)
   if (isSuperAdmin && !organization) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
@@ -158,7 +158,7 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  // Organization Layout (with sidebar)
+  // Organization Layout (with left sidebar) - for org users AND super admin viewing specific org
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Mobile Header */}
