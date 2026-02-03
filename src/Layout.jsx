@@ -74,11 +74,14 @@ function LayoutContent({ children, currentPageName }) {
     { name: "Dashboard", icon: Home, page: "Home" },
     { name: "Apply for Fund", icon: PlusCircle, page: "Apply" },
     { name: "My Requests", icon: FileText, page: "MyRequests" },
+    { name: "Notifications", icon: FileText, page: "Notifications" },
+    { name: "Profile", icon: UserIcon, page: "Profile" },
   ];
 
   const staffNavItems = [
     { name: "Dashboard", icon: Home, page: "Home" },
     { name: "Review Queue", icon: ClipboardList, page: "Queue" },
+    { name: "All Requests", icon: FileText, page: "MyRequests" },
     { name: "Funds", icon: Wallet, page: "Funds" },
     { name: "Reports", icon: BarChart3, page: "Reports" },
     ...(isFundManager ? [{ name: "Routing Rules", icon: Settings, page: "Rules" }] : []),
@@ -86,6 +89,8 @@ function LayoutContent({ children, currentPageName }) {
       { name: "Users", icon: Users, page: "Users" },
       { name: "Audit Log", icon: FileSearch, page: "AuditLog" }
     ] : []),
+    { name: "Notifications", icon: FileText, page: "Notifications" },
+    { name: "Profile", icon: UserIcon, page: "Profile" },
   ];
 
   // If super admin is viewing an organization, show org-specific nav
