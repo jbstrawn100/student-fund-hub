@@ -107,7 +107,7 @@ export default function CreateFund() {
       status: formData.status,
       fund_owner_id: user.id,
       fund_owner_name: user.full_name
-    };
+    });
 
     const newFund = await base44.entities.Fund.create(fundData);
 
