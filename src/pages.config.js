@@ -68,6 +68,17 @@ import SuperAdminLayout from './pages/SuperAdminLayout';
 import Users from './pages/Users';
 import PublicHome from './pages/PublicHome';
 import DashboardHome from './pages/DashboardHome';
+import DashboardQueue from './pages/DashboardQueue';
+import DashboardRequests from './pages/DashboardRequests';
+import DashboardFunds from './pages/DashboardFunds';
+import DashboardReports from './pages/DashboardReports';
+import DashboardRules from './pages/DashboardRules';
+import DashboardUsers from './pages/DashboardUsers';
+import DashboardAuditLog from './pages/DashboardAuditLog';
+import DashboardReviewRequest from './pages/DashboardReviewRequest';
+import DashboardCreateFund from './pages/DashboardCreateFund';
+import DashboardFundDetail from './pages/DashboardFundDetail';
+import Account from './pages/Account';
 import __Layout from './Layout.jsx';
 
 
@@ -93,6 +104,17 @@ export const PAGES = {
     "Users": Users,
     "PublicHome": PublicHome,
     "DashboardHome": DashboardHome,
+    "DashboardQueue": DashboardQueue,
+    "DashboardRequests": DashboardRequests,
+    "DashboardFunds": DashboardFunds,
+    "DashboardReports": DashboardReports,
+    "DashboardRules": DashboardRules,
+    "DashboardUsers": DashboardUsers,
+    "DashboardAuditLog": DashboardAuditLog,
+    "DashboardReviewRequest": DashboardReviewRequest,
+    "DashboardCreateFund": DashboardCreateFund,
+    "DashboardFundDetail": DashboardFundDetail,
+    "Account": Account,
 }
 
 export const pagesConfig = {
