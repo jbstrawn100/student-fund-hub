@@ -30,39 +30,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import OrganizationWrapper from "@/components/OrganizationWrapper";
-import { useOrganization } from "@/components/OrganizationContext";
-import { useOrgPrefix } from "@/components/useOrgFilter";
+import { AuthProvider, useAuth } from "@/components/AuthContext";
 
 function LayoutContent({ children, currentPageName }) {
-  const { organization, isSuperAdmin } = useOrganization();
-  const orgPrefix = useOrgPrefix();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, organization, loading, isSuperAdmin, isStaff } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    loadUser();
-  }, []);
-
-  const loadUser = async () => {
-    try {
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
-    } catch (error) {
-      console.error("Error loading user:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleLogout = () => {
     base44.auth.logout();
   };
 
-  const userRole = user?.staff_role || user?.app_role || "student";
-  const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
+  const userRole = user?.staff_role || user?.role || "student";
   const isAdmin = userRole === "admin";
   const isFundManager = userRole === "fund_manager" || isAdmin;
 
@@ -139,7 +118,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div className="flex items-center gap-2">
                 {user && <NotificationBell user={user} />}
-                <UserDropdown user={user} handleLogout={handleLogout} orgPrefix="" />
+                <UserDropdown user={user} handleLogout={handleLogout} />
               </div>
             </div>
           </div>
@@ -183,7 +162,7 @@ function LayoutContent({ children, currentPageName }) {
           </div>
           <div className="flex items-center gap-2">
             {user && <NotificationBell user={user} />}
-            <UserDropdown user={user} handleLogout={handleLogout} orgPrefix={orgPrefix} />
+            <UserDropdown user={user} handleLogout={handleLogout} />
           </div>
         </div>
       </header>
@@ -228,13 +207,10 @@ function LayoutContent({ children, currentPageName }) {
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = currentPageName === item.page;
-              const pageUrl = item.page.startsWith("Dashboard") 
-                ? `${orgPrefix}/dash/${item.page.replace("Dashboard", "").toLowerCase()}`
-                : `${orgPrefix}/${item.page.toLowerCase()}`;
               return (
                 <Link
                   key={item.page}
-                  to={pageUrl}
+                  to={createPageUrl(item.page)}
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                     isActive
@@ -255,9 +231,9 @@ function LayoutContent({ children, currentPageName }) {
               <div className="hidden lg:flex justify-end">
                 <NotificationBell user={user} />
               </div>
-            )}
-            <div className="hidden lg:block">
-              <UserDropdown user={user} handleLogout={handleLogout} fullWidth orgPrefix={orgPrefix} />
+              )}
+              <div className="hidden lg:block">
+              <UserDropdown user={user} handleLogout={handleLogout} fullWidth />
             </div>
           </div>
         </div>
@@ -273,8 +249,8 @@ function LayoutContent({ children, currentPageName }) {
   );
 }
 
-function UserDropdown({ user, handleLogout, fullWidth, orgPrefix }) {
-  const userRole = user?.staff_role || user?.app_role || "student";
+function UserDropdown({ user, handleLogout, fullWidth }) {
+  const userRole = user?.staff_role || user?.role || "student";
   
   return (
     <DropdownMenu>
@@ -316,8 +292,8 @@ function UserDropdown({ user, handleLogout, fullWidth, orgPrefix }) {
 
 export default function Layout({ children, currentPageName }) {
   return (
-    <OrganizationWrapper>
+    <AuthProvider>
       <LayoutContent children={children} currentPageName={currentPageName} />
-    </OrganizationWrapper>
+    </AuthProvider>
   );
 }
