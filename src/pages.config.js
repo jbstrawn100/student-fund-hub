@@ -51,17 +51,8 @@ import Account from './pages/Account';
 import Admin from './pages/Admin';
 import Apply from './pages/Apply';
 import CreateOrganization from './pages/CreateOrganization';
-import DashboardAuditLog from './pages/DashboardAuditLog';
-import DashboardCreateFund from './pages/DashboardCreateFund';
-import DashboardFundDetail from './pages/DashboardFundDetail';
-import DashboardFunds from './pages/DashboardFunds';
 import DashboardHome from './pages/DashboardHome';
-import DashboardQueue from './pages/DashboardQueue';
-import DashboardReports from './pages/DashboardReports';
 import DashboardRequests from './pages/DashboardRequests';
-import DashboardReviewRequest from './pages/DashboardReviewRequest';
-import DashboardRules from './pages/DashboardRules';
-import DashboardUsers from './pages/DashboardUsers';
 import FundDetail from './pages/FundDetail';
 import Home from './pages/Home';
 import MakeMeSuperAdmin from './pages/MakeMeSuperAdmin';
@@ -81,17 +72,8 @@ export const PAGES = {
     "Admin": Admin,
     "Apply": Apply,
     "CreateOrganization": CreateOrganization,
-    "DashboardAuditLog": DashboardAuditLog,
-    "DashboardCreateFund": DashboardCreateFund,
-    "DashboardFundDetail": DashboardFundDetail,
-    "DashboardFunds": DashboardFunds,
     "DashboardHome": DashboardHome,
-    "DashboardQueue": DashboardQueue,
-    "DashboardReports": DashboardReports,
     "DashboardRequests": DashboardRequests,
-    "DashboardReviewRequest": DashboardReviewRequest,
-    "DashboardRules": DashboardRules,
-    "DashboardUsers": DashboardUsers,
     "FundDetail": FundDetail,
     "Home": Home,
     "MakeMeSuperAdmin": MakeMeSuperAdmin,
