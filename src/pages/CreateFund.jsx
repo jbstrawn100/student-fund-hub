@@ -111,8 +111,7 @@ export default function CreateFund() {
 
     const newFund = await base44.entities.Fund.create(fundData);
 
-    await base44.entities.AuditLog.create({
-      organization_id: organization.id,
+    await base44.entities.AuditLog.create(addOrgId({
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "FUND_CREATED",
