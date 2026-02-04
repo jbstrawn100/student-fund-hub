@@ -123,7 +123,7 @@ function LayoutContent({ children, currentPageName }) {
                     return (
                       <Link
                         key={item.page}
-                        to={createPageUrl(item.page)}
+                        to="/admin"
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                           isActive
                             ? "bg-indigo-100 text-indigo-700 font-medium"
@@ -228,10 +228,13 @@ function LayoutContent({ children, currentPageName }) {
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = currentPageName === item.page;
+              const pageUrl = item.page.startsWith("Dashboard") 
+                ? `${orgPrefix}/dash/${item.page.replace("Dashboard", "").toLowerCase()}`
+                : `${orgPrefix}/${item.page.toLowerCase()}`;
               return (
                 <Link
                   key={item.page}
-                  to={orgPrefix + createPageUrl(item.page)}
+                  to={pageUrl}
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                     isActive
