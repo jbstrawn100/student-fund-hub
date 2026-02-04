@@ -79,6 +79,7 @@ import DashboardReviewRequest from './pages/DashboardReviewRequest';
 import DashboardCreateFund from './pages/DashboardCreateFund';
 import DashboardFundDetail from './pages/DashboardFundDetail';
 import Account from './pages/Account';
+import Admin from './pages/Admin';
 import __Layout from './Layout.jsx';
 
 
@@ -115,6 +116,7 @@ export const PAGES = {
     "DashboardCreateFund": DashboardCreateFund,
     "DashboardFundDetail": DashboardFundDetail,
     "Account": Account,
+    "Admin": Admin,
 }
 
 export const pagesConfig = {

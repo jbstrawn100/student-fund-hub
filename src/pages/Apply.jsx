@@ -311,6 +311,14 @@ export default function Apply() {
   };
 
   const confirmSubmit = async () => {
+    // Check if user account is approved
+    if (user.approval_status !== "approved") {
+      alert("Your account must be approved by an administrator before you can submit applications. You can save this as a draft and submit once approved.");
+      setShowConfirmModal(false);
+      setSubmitting(false);
+      return;
+    }
+
     setSubmitting(true);
 
     const requestId = await generateRequestId();

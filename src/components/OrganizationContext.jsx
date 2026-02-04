@@ -26,6 +26,17 @@ export function OrganizationProvider({ children }) {
       const path = window.location.pathname;
       const pathParts = path.split('/').filter(Boolean);
       
+      // If path is /admin, it's super admin mode
+      if (pathParts[0] === 'admin') {
+        try {
+          const user = await base44.auth.me();
+          setIsSuperAdmin(!user.organization_id);
+        } catch (err) {
+          setIsSuperAdmin(false);
+        }
+        return;
+      }
+      
       // If path starts with /{subdomain}, load that organization
       if (pathParts[0]) {
         const subdomain = pathParts[0];
@@ -43,9 +54,6 @@ export function OrganizationProvider({ children }) {
           } catch (err) {
             setIsSuperAdmin(false);
           }
-        } else {
-          // Path exists but no matching org = super admin mode
-          setIsSuperAdmin(true);
         }
       }
     } catch (error) {
