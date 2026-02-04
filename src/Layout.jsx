@@ -18,7 +18,8 @@ import {
   User as UserIcon,
   Home,
   FileSearch,
-  Building2
+  Building2,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,8 +54,15 @@ function LayoutContent({ children, currentPageName }) {
     { name: "Dashboard", icon: Home, page: "Home" },
   ];
 
-  // Show staff nav only for staff users
-  const navItems = isStaff || isSuperAdmin ? staffNavItems : [];
+  const applicantNavItems = [
+    { name: "Funds", icon: Wallet, page: "Apply" },
+    { name: "My Requests", icon: FileText, page: "MyRequests" },
+    { name: "Notifications", icon: Bell, page: "Notifications" },
+    { name: "Profile", icon: UserIcon, page: "Profile" },
+  ];
+
+  // Show staff nav for staff users, applicant nav for non-staff
+  const navItems = (isStaff || isSuperAdmin) ? staffNavItems : applicantNavItems;
 
   if (loading) {
     return (
@@ -67,10 +75,7 @@ function LayoutContent({ children, currentPageName }) {
     );
   }
 
-  // For non-staff users, don't show the layout at all
-  if (!isStaff && !isSuperAdmin) {
-    return children;
-  }
+
 
   // Super Admin viewing global dashboard (no sidebar, top nav only)
   if (isSuperAdmin && !organization) {
