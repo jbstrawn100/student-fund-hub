@@ -1,11 +1,1 @@
-import React from "react";
-import OrganizationWrapper from "@/components/OrganizationWrapper";
-import AppRouter from "@/components/AppRouter";
-
-export default function Admin() {
-  return (
-    <OrganizationWrapper>
-      <AppRouter />
-    </OrganizationWrapper>
-  );
-}
+export { default } from "./SuperAdminDashboard";
