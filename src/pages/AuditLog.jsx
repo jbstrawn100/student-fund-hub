@@ -11,10 +11,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Download, FileText, User, DollarSign, Settings, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
+import { useDataFilter } from "@/components/useDataFilter";
 
 export default function AuditLog() {
-  const orgFilter = useOrgFilter();
+  const dataFilter = useDataFilter();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
@@ -30,9 +30,9 @@ export default function AuditLog() {
   };
 
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ["auditLogs", orgFilter],
-    queryFn: () => base44.entities.AuditLog.filter(orgFilter, "-created_date", 500),
-    enabled: !!orgFilter,
+    queryKey: ["auditLogs", dataFilter],
+    queryFn: () => base44.entities.AuditLog.filter(dataFilter || {}, "-created_date", 500),
+    enabled: dataFilter !== null,
   });
 
   const filteredLogs = logs.filter(log => {

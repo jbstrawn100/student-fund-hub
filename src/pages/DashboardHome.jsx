@@ -17,12 +17,11 @@ import {
   ArrowRight,
   TrendingUp,
 } from "lucide-react";
-import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
+import { useDataFilter } from "@/components/useDataFilter";
 
 export default function DashboardHome() {
   const [user, setUser] = useState(null);
-  const orgFilter = useOrgFilter();
-  const orgPrefix = useOrgPrefix();
+  const dataFilter = useDataFilter();
 
   useEffect(() => {
     loadUser();
@@ -34,21 +33,21 @@ export default function DashboardHome() {
   };
 
   const { data: allRequests = [], isLoading } = useQuery({
-    queryKey: ["allRequests", orgFilter],
-    queryFn: () => base44.entities.FundRequest.filter(orgFilter, "-created_date"),
-    enabled: !!orgFilter,
+    queryKey: ["allRequests", dataFilter],
+    queryFn: () => base44.entities.FundRequest.filter(dataFilter || {}, "-created_date"),
+    enabled: dataFilter !== null,
   });
 
   const { data: funds = [] } = useQuery({
-    queryKey: ["allFunds", orgFilter],
-    queryFn: () => base44.entities.Fund.filter(orgFilter),
-    enabled: !!orgFilter,
+    queryKey: ["allFunds", dataFilter],
+    queryFn: () => base44.entities.Fund.filter(dataFilter || {}),
+    enabled: dataFilter !== null,
   });
 
   const { data: disbursements = [] } = useQuery({
-    queryKey: ["disbursements", orgFilter],
-    queryFn: () => base44.entities.Disbursement.filter(orgFilter),
-    enabled: !!orgFilter,
+    queryKey: ["disbursements", dataFilter],
+    queryFn: () => base44.entities.Disbursement.filter(dataFilter || {}),
+    enabled: dataFilter !== null,
   });
 
   if (!user) {
@@ -77,7 +76,7 @@ export default function DashboardHome() {
         description="Overview of fund requests and disbursements"
         actions={
           <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-            <Link to={`${orgPrefix}/dash/queue`}>
+            <Link to={createPageUrl("DashboardQueue")}>
               View Queue <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
@@ -118,7 +117,7 @@ export default function DashboardHome() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Requests Needing Attention</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link to={`${orgPrefix}/dash/queue`} className="text-indigo-600">
+              <Link to={createPageUrl("DashboardQueue")} className="text-indigo-600">
                 View All <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
@@ -137,7 +136,7 @@ export default function DashboardHome() {
                 {pendingRequests.map((request) => (
                   <Link
                     key={request.id}
-                    to={`${orgPrefix}/dash/review?id=${request.id}`}
+                    to={createPageUrl(`DashboardReviewRequest?id=${request.id}`)}
                     className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors group"
                   >
                     <div className="flex-1 min-w-0">
@@ -164,7 +163,7 @@ export default function DashboardHome() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Fund Overview</CardTitle>
             <Button variant="ghost" size="sm" asChild>
-              <Link to={`${orgPrefix}/dash/funds`} className="text-indigo-600">
+              <Link to={createPageUrl("DashboardFunds")} className="text-indigo-600">
                 Manage
               </Link>
             </Button>
