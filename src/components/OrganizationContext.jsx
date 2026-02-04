@@ -41,9 +41,11 @@ export function OrganizationProvider({ children }) {
         try {
           const user = await base44.auth.me();
           setIsSuperAdmin(!user.organization_id);
+          setOrganization(null); // No organization in super admin mode
         } catch (err) {
           setIsSuperAdmin(false);
         }
+        setLoading(false);
         return;
       }
       
