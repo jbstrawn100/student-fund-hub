@@ -16,9 +16,8 @@ import {
   Save,
   CheckCircle
 } from "lucide-react";
-import OrganizationWrapper from "@/components/OrganizationWrapper";
 
-function ProfileContent() {
+export default function Profile() {
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     phone: "",
@@ -212,13 +211,5 @@ function ProfileContent() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function Profile() {
-  return (
-    <OrganizationWrapper>
-      <ProfileContent />
-    </OrganizationWrapper>
   );
 }

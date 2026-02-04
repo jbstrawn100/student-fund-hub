@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import PageHeader from "@/components/shared/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,22 +23,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { Plus, Building2, MoreVertical, Users, FileText, DollarSign, Search, Eye, ExternalLink } from "lucide-react";
-import OrganizationWrapper from "@/components/OrganizationWrapper";
-import { useOrganization } from "@/components/OrganizationContext";
+import { Plus, Building2, MoreVertical, Users, FileText, Search, Eye } from "lucide-react";
+import { useAuth } from "@/components/AuthContext";
 
-function SuperAdminDashboardContent() {
+export default function SuperAdminDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const { isSuperAdmin, loading: contextLoading } = useOrganization();
+  const { isSuperAdmin, loading: authLoading } = useAuth();
 
   // Redirect if not super admin
   useEffect(() => {
-    if (!contextLoading && !isSuperAdmin) {
-      window.location.href = "/";
+    if (!authLoading && !isSuperAdmin) {
+      window.location.href = createPageUrl("Home");
     }
-  }, [isSuperAdmin, contextLoading]);
+  }, [isSuperAdmin, authLoading]);
 
   const { data: organizations = [], isLoading } = useQuery({
     queryKey: ["organizations"],
@@ -84,12 +83,16 @@ function SuperAdminDashboardContent() {
     updateOrgMutation.mutate({ id: org.id, data: { status: newStatus } });
   };
 
-  if (contextLoading || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <LoadingSpinner size="lg" />
       </div>
     );
+  }
+
+  if (!isSuperAdmin) {
+    return null;
   }
 
   return (
@@ -219,12 +222,6 @@ function SuperAdminDashboardContent() {
                             <Eye className="w-4 h-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link to={`/${org.subdomain}`}>
-                              <ExternalLink className="w-4 h-4 mr-2" />
-                              Visit Portal
-                            </Link>
-                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleStatusToggle(org)}>
                             {org.status === "active" ? "Suspend" : "Activate"}
                           </DropdownMenuItem>
@@ -239,13 +236,5 @@ function SuperAdminDashboardContent() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function SuperAdminDashboard() {
-  return (
-    <OrganizationWrapper>
-      <SuperAdminDashboardContent />
-    </OrganizationWrapper>
   );
 }
