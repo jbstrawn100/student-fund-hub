@@ -20,6 +20,16 @@ export function OrganizationProvider({ children }) {
     loadOrganization();
   }, []);
 
+  useEffect(() => {
+    // Reload organization when path changes
+    const handlePathChange = () => {
+      loadOrganization();
+    };
+    
+    window.addEventListener('popstate', handlePathChange);
+    return () => window.removeEventListener('popstate', handlePathChange);
+  }, []);
+
   const loadOrganization = async () => {
     try {
       // Check URL path for organization

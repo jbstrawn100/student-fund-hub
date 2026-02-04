@@ -90,13 +90,13 @@ export default function PublicHome() {
                 <>
                   {isStaff && (
                     <Button asChild variant="outline">
-                      <Link to={orgPrefix + createPageUrl("DashboardHome")}>
+                      <Link to={`${orgPrefix}/dash/home`}>
                         Dashboard
                       </Link>
                     </Button>
                   )}
                   <Button asChild>
-                    <Link to={orgPrefix + createPageUrl("Account")}>
+                    <Link to={`${orgPrefix}/account`}>
                       My Account
                     </Link>
                   </Button>
@@ -200,7 +200,7 @@ export default function PublicHome() {
                     )}
                   </div>
                   <Button asChild className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-                    <Link to={orgPrefix + createPageUrl(`Apply?fund=${fund.id}`)}>
+                    <Link to={`${orgPrefix}/apply?fund=${fund.id}`}>
                       <FileText className="w-4 h-4 mr-2" />
                       Apply Now
                     </Link>

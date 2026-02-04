@@ -47,10 +47,23 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import Account from './pages/Account';
+import Admin from './pages/Admin';
 import Apply from './pages/Apply';
 import AuditLog from './pages/AuditLog';
 import CreateFund from './pages/CreateFund';
 import CreateOrganization from './pages/CreateOrganization';
+import DashboardAuditLog from './pages/DashboardAuditLog';
+import DashboardCreateFund from './pages/DashboardCreateFund';
+import DashboardFundDetail from './pages/DashboardFundDetail';
+import DashboardFunds from './pages/DashboardFunds';
+import DashboardHome from './pages/DashboardHome';
+import DashboardQueue from './pages/DashboardQueue';
+import DashboardReports from './pages/DashboardReports';
+import DashboardRequests from './pages/DashboardRequests';
+import DashboardReviewRequest from './pages/DashboardReviewRequest';
+import DashboardRules from './pages/DashboardRules';
+import DashboardUsers from './pages/DashboardUsers';
 import FundDetail from './pages/FundDetail';
 import Funds from './pages/Funds';
 import Home from './pages/Home';
@@ -58,6 +71,7 @@ import MyRequests from './pages/MyRequests';
 import Notifications from './pages/Notifications';
 import OrganizationDetail from './pages/OrganizationDetail';
 import Profile from './pages/Profile';
+import PublicHome from './pages/PublicHome';
 import Queue from './pages/Queue';
 import Reports from './pages/Reports';
 import RequestDetail from './pages/RequestDetail';
@@ -66,28 +80,27 @@ import Rules from './pages/Rules';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminLayout from './pages/SuperAdminLayout';
 import Users from './pages/Users';
-import PublicHome from './pages/PublicHome';
-import DashboardHome from './pages/DashboardHome';
-import DashboardQueue from './pages/DashboardQueue';
-import DashboardRequests from './pages/DashboardRequests';
-import DashboardFunds from './pages/DashboardFunds';
-import DashboardReports from './pages/DashboardReports';
-import DashboardRules from './pages/DashboardRules';
-import DashboardUsers from './pages/DashboardUsers';
-import DashboardAuditLog from './pages/DashboardAuditLog';
-import DashboardReviewRequest from './pages/DashboardReviewRequest';
-import DashboardCreateFund from './pages/DashboardCreateFund';
-import DashboardFundDetail from './pages/DashboardFundDetail';
-import Account from './pages/Account';
-import Admin from './pages/Admin';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Account": Account,
+    "Admin": Admin,
     "Apply": Apply,
     "AuditLog": AuditLog,
     "CreateFund": CreateFund,
     "CreateOrganization": CreateOrganization,
+    "DashboardAuditLog": DashboardAuditLog,
+    "DashboardCreateFund": DashboardCreateFund,
+    "DashboardFundDetail": DashboardFundDetail,
+    "DashboardFunds": DashboardFunds,
+    "DashboardHome": DashboardHome,
+    "DashboardQueue": DashboardQueue,
+    "DashboardReports": DashboardReports,
+    "DashboardRequests": DashboardRequests,
+    "DashboardReviewRequest": DashboardReviewRequest,
+    "DashboardRules": DashboardRules,
+    "DashboardUsers": DashboardUsers,
     "FundDetail": FundDetail,
     "Funds": Funds,
     "Home": Home,
@@ -95,6 +108,7 @@ export const PAGES = {
     "Notifications": Notifications,
     "OrganizationDetail": OrganizationDetail,
     "Profile": Profile,
+    "PublicHome": PublicHome,
     "Queue": Queue,
     "Reports": Reports,
     "RequestDetail": RequestDetail,
@@ -103,20 +117,6 @@ export const PAGES = {
     "SuperAdminDashboard": SuperAdminDashboard,
     "SuperAdminLayout": SuperAdminLayout,
     "Users": Users,
-    "PublicHome": PublicHome,
-    "DashboardHome": DashboardHome,
-    "DashboardQueue": DashboardQueue,
-    "DashboardRequests": DashboardRequests,
-    "DashboardFunds": DashboardFunds,
-    "DashboardReports": DashboardReports,
-    "DashboardRules": DashboardRules,
-    "DashboardUsers": DashboardUsers,
-    "DashboardAuditLog": DashboardAuditLog,
-    "DashboardReviewRequest": DashboardReviewRequest,
-    "DashboardCreateFund": DashboardCreateFund,
-    "DashboardFundDetail": DashboardFundDetail,
-    "Account": Account,
-    "Admin": Admin,
 }
 
 export const pagesConfig = {
