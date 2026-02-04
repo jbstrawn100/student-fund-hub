@@ -5,19 +5,13 @@ import { base44 } from "@/api/base44Client";
 import {
   GraduationCap,
   FileText,
-  Users,
   Wallet,
-  BarChart3,
-  Settings,
   LogOut,
   Menu,
   X,
-  ClipboardList,
-  PlusCircle,
   ChevronDown,
   User as UserIcon,
   Home,
-  FileSearch,
   Building2,
   Bell
 } from "lucide-react";
@@ -42,27 +36,14 @@ function LayoutContent({ children, currentPageName }) {
     base44.auth.logout();
   };
 
-  const userRole = user?.staff_role || user?.role || "student";
-  const isAdmin = userRole === "admin";
-  const isFundManager = userRole === "fund_manager" || isAdmin;
-
-  const superAdminNavItems = [
-    { name: "Organizations", icon: Building2, page: "SuperAdminDashboard" },
-  ];
-
-  const staffNavItems = [
+  const navItems = [
     { name: "Dashboard", icon: Home, page: "Home" },
-  ];
-
-  const applicantNavItems = [
+    { name: "Organizations", icon: Building2, page: "SuperAdminDashboard" },
     { name: "Funds", icon: Wallet, page: "Apply" },
     { name: "My Requests", icon: FileText, page: "MyRequests" },
     { name: "Notifications", icon: Bell, page: "Notifications" },
     { name: "Profile", icon: UserIcon, page: "Profile" },
   ];
-
-  // Show staff nav for staff users, applicant nav for non-staff
-  const navItems = (isStaff || isSuperAdmin) ? staffNavItems : applicantNavItems;
 
   if (loading) {
     return (
@@ -77,60 +58,6 @@ function LayoutContent({ children, currentPageName }) {
 
 
 
-  // Super Admin viewing global dashboard (no sidebar, top nav only)
-  if (isSuperAdmin && !organization) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
-        {/* Top Navigation */}
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/50">
-          <div className="max-w-7xl mx-auto px-4 md:px-8 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="font-semibold text-slate-800">Super Admin</span>
-                </div>
-                <nav className="hidden md:flex items-center gap-1">
-                  {superAdminNavItems.map((item) => {
-                    const isActive = currentPageName === item.page;
-                    return (
-                      <Link
-                        key={item.page}
-                        to="/admin"
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                          isActive
-                            ? "bg-indigo-100 text-indigo-700 font-medium"
-                            : "text-slate-600 hover:bg-slate-100"
-                        }`}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
-              <div className="flex items-center gap-2">
-                {user && <NotificationBell user={user} />}
-                <UserDropdown user={user} handleLogout={handleLogout} />
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="min-h-screen">
-          <div className="p-4 md:p-8 max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Organization Layout (with left sidebar) - for org users AND super admin viewing specific org
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Mobile Header */}
@@ -148,11 +75,11 @@ function LayoutContent({ children, currentPageName }) {
                 <img src={organization.logo_url} alt={organization.org_name} className="w-8 h-8 rounded-lg object-cover" />
               ) : (
                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
-                  {isSuperAdmin ? <Building2 className="w-5 h-5 text-white" /> : <GraduationCap className="w-5 h-5 text-white" />}
+                  <GraduationCap className="w-5 h-5 text-white" />
                 </div>
               )}
               <span className="font-semibold text-slate-800">
-                {isSuperAdmin ? "Super Admin" : organization?.org_name || "Student Funds"}
+                {organization?.org_name || "Student Funds"}
               </span>
             </div>
           </div>
@@ -185,15 +112,15 @@ function LayoutContent({ children, currentPageName }) {
                 <img src={organization.logo_url} alt={organization.org_name} className="w-10 h-10 rounded-xl object-cover shadow-lg" />
               ) : (
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                  {isSuperAdmin ? <Building2 className="w-6 h-6 text-white" /> : <GraduationCap className="w-6 h-6 text-white" />}
+                  <GraduationCap className="w-6 h-6 text-white" />
                 </div>
               )}
               <div>
                 <h1 className="font-bold text-slate-800 text-lg">
-                  {isSuperAdmin ? "Super Admin" : organization?.org_name || "Student Funds"}
+                  {organization?.org_name || "Student Funds"}
                 </h1>
-                <p className="text-xs text-slate-500 capitalize">
-                  {isSuperAdmin ? "Platform Management" : `${userRole} Portal`}
+                <p className="text-xs text-slate-500">
+                  {user?.full_name}
                 </p>
               </div>
             </div>
@@ -246,8 +173,6 @@ function LayoutContent({ children, currentPageName }) {
 }
 
 function UserDropdown({ user, handleLogout, fullWidth }) {
-  const userRole = user?.staff_role || user?.role || "student";
-  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -264,7 +189,7 @@ function UserDropdown({ user, handleLogout, fullWidth }) {
             {fullWidth && (
               <div className="flex-1 text-left">
                 <p className="font-medium text-slate-800 text-sm">{user?.full_name || "User"}</p>
-                <p className="text-xs text-slate-500 capitalize">{userRole}</p>
+                <p className="text-xs text-slate-500">{user?.email}</p>
               </div>
             )}
             <ChevronDown className="w-4 h-4 text-slate-400" />
