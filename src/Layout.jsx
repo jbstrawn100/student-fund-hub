@@ -13,7 +13,8 @@ import {
   User as UserIcon,
   Home,
   Building2,
-  Bell
+  Bell,
+  PlusCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
