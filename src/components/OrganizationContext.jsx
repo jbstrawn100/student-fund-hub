@@ -36,8 +36,8 @@ export function OrganizationProvider({ children }) {
       const path = window.location.pathname;
       const pathParts = path.split('/').filter(Boolean);
       
-      // If path is /admin, it's super admin mode
-      if (pathParts[0] === 'admin') {
+      // If path is /admin or starts with admin, it's super admin mode
+      if (pathParts[0] === 'admin' || path.toLowerCase().includes('admin')) {
         try {
           const user = await base44.auth.me();
           setIsSuperAdmin(!user.organization_id);
@@ -49,7 +49,7 @@ export function OrganizationProvider({ children }) {
         return;
       }
       
-      // If path starts with /{subdomain}, load that organization
+      // Try to load organization from URL path first
       if (pathParts[0]) {
         const subdomain = pathParts[0];
         
@@ -59,14 +59,32 @@ export function OrganizationProvider({ children }) {
         if (orgs.length > 0) {
           setOrganization(orgs[0]);
           
-          // Check if user is super admin (no organization_id on user record)
+          // Check if user is super admin
           try {
             const user = await base44.auth.me();
             setIsSuperAdmin(!user.organization_id);
           } catch (err) {
             setIsSuperAdmin(false);
           }
+          setLoading(false);
+          return;
         }
+      }
+      
+      // If no org from URL, try to load from user's organization_id
+      try {
+        const user = await base44.auth.me();
+        if (user.organization_id) {
+          const org = await base44.entities.Organization.filter({ id: user.organization_id });
+          if (org.length > 0) {
+            setOrganization(org[0]);
+          }
+        } else {
+          // No organization_id means super admin
+          setIsSuperAdmin(true);
+        }
+      } catch (err) {
+        console.error("Error loading user organization:", err);
       }
     } catch (error) {
       console.error("Error loading organization:", error);
