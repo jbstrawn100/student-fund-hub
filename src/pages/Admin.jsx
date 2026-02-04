@@ -1,2 +1,11 @@
-// Super Admin Organizations page
-export { default } from "./SuperAdminDashboard";
+import React from "react";
+import OrganizationWrapper from "@/components/OrganizationWrapper";
+import AppRouter from "@/components/AppRouter";
+
+export default function Admin() {
+  return (
+    <OrganizationWrapper>
+      <AppRouter />
+    </OrganizationWrapper>
+  );
+}
