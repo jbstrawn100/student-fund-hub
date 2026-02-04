@@ -66,6 +66,8 @@ import Rules from './pages/Rules';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminLayout from './pages/SuperAdminLayout';
 import Users from './pages/Users';
+import PublicHome from './pages/PublicHome';
+import DashboardHome from './pages/DashboardHome';
 import __Layout from './Layout.jsx';
 
 
@@ -89,6 +91,8 @@ export const PAGES = {
     "SuperAdminDashboard": SuperAdminDashboard,
     "SuperAdminLayout": SuperAdminLayout,
     "Users": Users,
+    "PublicHome": PublicHome,
+    "DashboardHome": DashboardHome,
 }
 
 export const pagesConfig = {
