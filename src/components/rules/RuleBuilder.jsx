@@ -22,8 +22,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Save, Trash2, X, CheckCircle } from "lucide-react";
-import { useOrganization } from "@/components/OrganizationContext";
-import { useOrgFilter } from "@/components/useOrgFilter";
+import { useAuth } from "@/components/AuthContext";
+import { useDataFilter } from "@/components/useDataFilter";
 
 const USE_CATEGORIES = [
   "Tuition/Fees", "Books/Supplies", "Housing", "Food",
@@ -31,8 +31,8 @@ const USE_CATEGORIES = [
 ];
 
 export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onClose }) {
-  const { organization } = useOrganization();
-  const orgFilter = useOrgFilter();
+  const { organization } = useAuth();
+  const dataFilter = useDataFilter();
   const [formData, setFormData] = useState({
     step_order: rule?.step_order || existingSteps + 1,
     step_name: rule?.step_name || "",
@@ -51,9 +51,9 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
   const [deleting, setDeleting] = useState(false);
 
   const { data: users = [] } = useQuery({
-    queryKey: ["allUsers", orgFilter],
-    queryFn: () => base44.entities.User.filter(orgFilter),
-    enabled: !!orgFilter,
+    queryKey: ["allUsers", dataFilter],
+    queryFn: () => base44.entities.User.filter(dataFilter || {}),
+    enabled: true,
   });
 
   const toggleUser = (userId, userName) => {

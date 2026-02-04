@@ -30,12 +30,14 @@ import {
   File
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrganization } from "@/components/OrganizationContext";
+import { useAuth } from "@/components/AuthContext";
+import { useDataWithOrg } from "@/components/useDataFilter";
 
 export default function RequestDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { organization } = useOrganization();
+  const { organization } = useAuth();
+  const addOrgId = useDataWithOrg();
   const [user, setUser] = useState(null);
   const [response, setResponse] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -76,8 +78,7 @@ export default function RequestDetail() {
     setSubmitting(true);
 
     // Add student response as a review
-    await base44.entities.Review.create({
-      organization_id: organization.id,
+    await base44.entities.Review.create(addOrgId({
       fund_request_id: requestId,
       reviewer_user_id: user.id,
       reviewer_name: user.full_name,
@@ -85,7 +86,7 @@ export default function RequestDetail() {
       decision: "Pending",
       comments: response,
       decided_at: new Date().toISOString()
-    });
+    }));
 
     // Update request status back to In Review
     await base44.entities.FundRequest.update(requestId, {
@@ -93,15 +94,14 @@ export default function RequestDetail() {
     });
 
     // Create audit log
-    await base44.entities.AuditLog.create({
-      organization_id: organization.id,
+    await base44.entities.AuditLog.create(addOrgId({
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "STUDENT_RESPONSE",
       entity_type: "FundRequest",
       entity_id: requestId,
       details: JSON.stringify({ response })
-    });
+    }));
 
     queryClient.invalidateQueries(["fundRequest", requestId]);
     queryClient.invalidateQueries(["reviews", requestId]);
