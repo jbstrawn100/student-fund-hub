@@ -50,8 +50,6 @@
 import Account from './pages/Account';
 import Admin from './pages/Admin';
 import Apply from './pages/Apply';
-import AuditLog from './pages/AuditLog';
-import CreateFund from './pages/CreateFund';
 import CreateOrganization from './pages/CreateOrganization';
 import DashboardAuditLog from './pages/DashboardAuditLog';
 import DashboardCreateFund from './pages/DashboardCreateFund';
@@ -65,7 +63,6 @@ import DashboardReviewRequest from './pages/DashboardReviewRequest';
 import DashboardRules from './pages/DashboardRules';
 import DashboardUsers from './pages/DashboardUsers';
 import FundDetail from './pages/FundDetail';
-import Funds from './pages/Funds';
 import Home from './pages/Home';
 import MakeMeSuperAdmin from './pages/MakeMeSuperAdmin';
 import MyRequests from './pages/MyRequests';
@@ -73,14 +70,9 @@ import Notifications from './pages/Notifications';
 import OrganizationDetail from './pages/OrganizationDetail';
 import Profile from './pages/Profile';
 import PublicHome from './pages/PublicHome';
-import Queue from './pages/Queue';
-import Reports from './pages/Reports';
 import RequestDetail from './pages/RequestDetail';
-import ReviewRequest from './pages/ReviewRequest';
-import Rules from './pages/Rules';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminLayout from './pages/SuperAdminLayout';
-import Users from './pages/Users';
 import __Layout from './Layout.jsx';
 
 
@@ -88,8 +80,6 @@ export const PAGES = {
     "Account": Account,
     "Admin": Admin,
     "Apply": Apply,
-    "AuditLog": AuditLog,
-    "CreateFund": CreateFund,
     "CreateOrganization": CreateOrganization,
     "DashboardAuditLog": DashboardAuditLog,
     "DashboardCreateFund": DashboardCreateFund,
@@ -103,7 +93,6 @@ export const PAGES = {
     "DashboardRules": DashboardRules,
     "DashboardUsers": DashboardUsers,
     "FundDetail": FundDetail,
-    "Funds": Funds,
     "Home": Home,
     "MakeMeSuperAdmin": MakeMeSuperAdmin,
     "MyRequests": MyRequests,
@@ -111,14 +100,9 @@ export const PAGES = {
     "OrganizationDetail": OrganizationDetail,
     "Profile": Profile,
     "PublicHome": PublicHome,
-    "Queue": Queue,
-    "Reports": Reports,
     "RequestDetail": RequestDetail,
-    "ReviewRequest": ReviewRequest,
-    "Rules": Rules,
     "SuperAdminDashboard": SuperAdminDashboard,
     "SuperAdminLayout": SuperAdminLayout,
-    "Users": Users,
 }
 
 export const pagesConfig = {
