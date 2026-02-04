@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
@@ -24,11 +24,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Plus, Building2, MoreVertical, Users, FileText, DollarSign, Search, Eye, ExternalLink } from "lucide-react";
+import OrganizationWrapper from "@/components/OrganizationWrapper";
+import { useOrganization } from "@/components/OrganizationContext";
 
-export default function SuperAdminDashboard() {
+function SuperAdminDashboardContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const { isSuperAdmin, loading: contextLoading } = useOrganization();
+
+  // Redirect if not super admin
+  useEffect(() => {
+    if (!contextLoading && !isSuperAdmin) {
+      window.location.href = "/";
+    }
+  }, [isSuperAdmin, contextLoading]);
 
   const { data: organizations = [], isLoading } = useQuery({
     queryKey: ["organizations"],
@@ -74,7 +84,7 @@ export default function SuperAdminDashboard() {
     updateOrgMutation.mutate({ id: org.id, data: { status: newStatus } });
   };
 
-  if (isLoading) {
+  if (contextLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <LoadingSpinner size="lg" />
@@ -210,7 +220,7 @@ export default function SuperAdminDashboard() {
                             View Details
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link to={`/${org.subdomain}/Home`}>
+                            <Link to={`/${org.subdomain}`}>
                               <ExternalLink className="w-4 h-4 mr-2" />
                               Visit Portal
                             </Link>
@@ -229,5 +239,13 @@ export default function SuperAdminDashboard() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SuperAdminDashboard() {
+  return (
+    <OrganizationWrapper>
+      <SuperAdminDashboardContent />
+    </OrganizationWrapper>
   );
 }
