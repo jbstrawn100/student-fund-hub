@@ -37,12 +37,13 @@ function LayoutContent({ children, currentPageName }) {
   };
 
   const navItems = [
-    { name: "Dashboard", icon: Home, page: "Home" },
+    { name: "Home", icon: Home, page: "Home" },
     { name: "Organizations", icon: Building2, page: "SuperAdminDashboard" },
     { name: "Funds", icon: Wallet, page: "Apply" },
     { name: "My Requests", icon: FileText, page: "MyRequests" },
     { name: "Notifications", icon: Bell, page: "Notifications" },
     { name: "Profile", icon: UserIcon, page: "Profile" },
+    { name: "Account", icon: UserIcon, page: "Account" },
   ];
 
   if (loading) {
