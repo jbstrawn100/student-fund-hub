@@ -80,6 +80,7 @@ import Rules from './pages/Rules';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminLayout from './pages/SuperAdminLayout';
 import Users from './pages/Users';
+import MakeMeSuperAdmin from './pages/MakeMeSuperAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -117,6 +118,7 @@ export const PAGES = {
     "SuperAdminDashboard": SuperAdminDashboard,
     "SuperAdminLayout": SuperAdminLayout,
     "Users": Users,
+    "MakeMeSuperAdmin": MakeMeSuperAdmin,
 }
 
 export const pagesConfig = {
