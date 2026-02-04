@@ -277,8 +277,7 @@ export default function Apply() {
 
     const requestId = await generateRequestId();
 
-    const requestData = {
-      organization_id: organization.id,
+    const requestData = addOrgId({
       request_id: requestId,
       fund_id: selectedFund.id,
       fund_name: selectedFund.fund_name,
@@ -294,11 +293,11 @@ export default function Apply() {
       attachments: formData.attachments,
       status: "Draft",
       locked: false
-    };
+    });
 
     await base44.entities.FundRequest.create(requestData);
 
-    navigate(orgPrefix + createPageUrl("MyRequests"));
+    navigate(createPageUrl("MyRequests"));
   };
 
   const handleSubmit = async () => {
@@ -323,8 +322,7 @@ export default function Apply() {
 
     const requestId = await generateRequestId();
 
-    const requestData = {
-      organization_id: organization.id,
+    const requestData = addOrgId({
       request_id: requestId,
       fund_id: selectedFund.id,
       fund_name: selectedFund.fund_name,
@@ -341,16 +339,15 @@ export default function Apply() {
       status: "Submitted",
       submitted_at: new Date().toISOString(),
       locked: true
-    };
+    });
 
     const newRequest = await base44.entities.FundRequest.create(requestData);
 
     // Get routing rules for this fund
-    const rules = await base44.entities.RoutingRule.filter({ 
-      organization_id: organization.id,
+    const rules = await base44.entities.RoutingRule.filter(addOrgId({ 
       fund_id: selectedFund.id,
       is_active: true 
-    }, "step_order");
+    }), "step_order");
 
     // Filter rules based on conditions
     const applicableRules = rules.filter(rule => {
