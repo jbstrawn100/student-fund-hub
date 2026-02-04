@@ -47,44 +47,40 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Account from './pages/Account';
-import Admin from './pages/Admin';
 import Apply from './pages/Apply';
-import CreateOrganization from './pages/CreateOrganization';
-import DashboardHome from './pages/DashboardHome';
-import DashboardRequests from './pages/DashboardRequests';
+import CreateFund from './pages/CreateFund';
 import FundDetail from './pages/FundDetail';
+import Funds from './pages/Funds';
 import Home from './pages/Home';
-import MakeMeSuperAdmin from './pages/MakeMeSuperAdmin';
 import MyRequests from './pages/MyRequests';
-import Notifications from './pages/Notifications';
-import OrganizationDetail from './pages/OrganizationDetail';
 import Profile from './pages/Profile';
-import PublicHome from './pages/PublicHome';
+import Queue from './pages/Queue';
+import Reports from './pages/Reports';
 import RequestDetail from './pages/RequestDetail';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import SuperAdminLayout from './pages/SuperAdminLayout';
+import ReviewRequest from './pages/ReviewRequest';
+import Rules from './pages/Rules';
+import Users from './pages/Users';
+import Notifications from './pages/Notifications';
+import AuditLog from './pages/AuditLog';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Account": Account,
-    "Admin": Admin,
     "Apply": Apply,
-    "CreateOrganization": CreateOrganization,
-    "DashboardHome": DashboardHome,
-    "DashboardRequests": DashboardRequests,
+    "CreateFund": CreateFund,
     "FundDetail": FundDetail,
+    "Funds": Funds,
     "Home": Home,
-    "MakeMeSuperAdmin": MakeMeSuperAdmin,
     "MyRequests": MyRequests,
-    "Notifications": Notifications,
-    "OrganizationDetail": OrganizationDetail,
     "Profile": Profile,
-    "PublicHome": PublicHome,
+    "Queue": Queue,
+    "Reports": Reports,
     "RequestDetail": RequestDetail,
-    "SuperAdminDashboard": SuperAdminDashboard,
-    "SuperAdminLayout": SuperAdminLayout,
+    "ReviewRequest": ReviewRequest,
+    "Rules": Rules,
+    "Users": Users,
+    "Notifications": Notifications,
+    "AuditLog": AuditLog,
 }
 
 export const pagesConfig = {

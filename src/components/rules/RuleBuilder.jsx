@@ -22,8 +22,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
 import { Save, Trash2, X, CheckCircle } from "lucide-react";
-import { useAuth } from "@/components/AuthContext";
-import { useDataFilter } from "@/components/useDataFilter";
 
 const USE_CATEGORIES = [
   "Tuition/Fees", "Books/Supplies", "Housing", "Food",
@@ -31,8 +29,6 @@ const USE_CATEGORIES = [
 ];
 
 export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onClose }) {
-  const { organization } = useAuth();
-  const dataFilter = useDataFilter();
   const [formData, setFormData] = useState({
     step_order: rule?.step_order || existingSteps + 1,
     step_name: rule?.step_name || "",
@@ -51,9 +47,8 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
   const [deleting, setDeleting] = useState(false);
 
   const { data: users = [] } = useQuery({
-    queryKey: ["allUsers", dataFilter],
-    queryFn: () => base44.entities.User.filter(dataFilter || {}),
-    enabled: true,
+    queryKey: ["allUsers"],
+    queryFn: () => base44.entities.User.list(),
   });
 
   const toggleUser = (userId, userName) => {
@@ -92,7 +87,6 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
     const currentUser = await base44.auth.me();
 
     const ruleData = {
-      organization_id: organization.id,
       fund_id: fundId,
       fund_name: fundName,
       step_order: parseInt(formData.step_order),
@@ -112,7 +106,6 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
     if (rule) {
       await base44.entities.RoutingRule.update(rule.id, ruleData);
       await base44.entities.AuditLog.create({
-        organization_id: organization.id,
         actor_user_id: currentUser.id,
         actor_name: currentUser.full_name,
         action_type: "RULE_UPDATED",
@@ -127,7 +120,6 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
     } else {
       const newRule = await base44.entities.RoutingRule.create(ruleData);
       await base44.entities.AuditLog.create({
-        organization_id: organization.id,
         actor_user_id: currentUser.id,
         actor_name: currentUser.full_name,
         action_type: "RULE_CREATED",
@@ -152,7 +144,6 @@ export default function RuleBuilder({ fundId, fundName, rule, existingSteps, onC
     const currentUser = await base44.auth.me();
     
     await base44.entities.AuditLog.create({
-      organization_id: organization.id,
       actor_user_id: currentUser.id,
       actor_name: currentUser.full_name,
       action_type: "RULE_DELETED",

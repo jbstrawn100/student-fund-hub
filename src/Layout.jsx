@@ -5,16 +5,19 @@ import { base44 } from "@/api/base44Client";
 import {
   GraduationCap,
   FileText,
+  Users,
   Wallet,
+  BarChart3,
+  Settings,
   LogOut,
   Menu,
   X,
+  ClipboardList,
+  PlusCircle,
   ChevronDown,
   User as UserIcon,
   Home,
-  Building2,
-  Bell,
-  PlusCircle
+  FileSearch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,27 +29,56 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import NotificationBell from "@/components/notifications/NotificationBell";
-import { AuthProvider, useAuth } from "@/components/AuthContext";
 
-function LayoutContent({ children, currentPageName }) {
-  const { user, organization, loading, isSuperAdmin, isStaff } = useAuth();
+export default function Layout({ children, currentPageName }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    try {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+    } catch (error) {
+      console.error("Error loading user:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     base44.auth.logout();
   };
 
-  const navItems = [
-    { name: "Home", icon: Home, page: "Home" },
-    { name: "Organizations", icon: Building2, page: "SuperAdminDashboard" },
-    { name: "Create Organization", icon: PlusCircle, page: "CreateOrganization" },
-    { name: "Funds", icon: Wallet, page: "Apply" },
+  const userRole = user?.app_role || "student";
+  const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
+  const isAdmin = userRole === "admin";
+  const isFundManager = userRole === "fund_manager" || isAdmin;
+
+  const studentNavItems = [
+    { name: "Dashboard", icon: Home, page: "Home" },
+    { name: "Apply for Fund", icon: PlusCircle, page: "Apply" },
     { name: "My Requests", icon: FileText, page: "MyRequests" },
-    { name: "Notifications", icon: Bell, page: "Notifications" },
-    { name: "Profile", icon: UserIcon, page: "Profile" },
-    { name: "Account", icon: UserIcon, page: "Account" },
   ];
+
+  const staffNavItems = [
+    { name: "Dashboard", icon: Home, page: "Home" },
+    { name: "Review Queue", icon: ClipboardList, page: "Queue" },
+    { name: "Funds", icon: Wallet, page: "Funds" },
+    { name: "Reports", icon: BarChart3, page: "Reports" },
+    ...(isFundManager ? [{ name: "Routing Rules", icon: Settings, page: "Rules" }] : []),
+    ...(isAdmin ? [
+      { name: "Users", icon: Users, page: "Users" },
+      { name: "Audit Log", icon: FileSearch, page: "AuditLog" }
+    ] : []),
+  ];
+
+  const navItems = isStaff ? staffNavItems : studentNavItems;
 
   if (loading) {
     return (
@@ -58,8 +90,6 @@ function LayoutContent({ children, currentPageName }) {
       </div>
     );
   }
-
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
@@ -74,16 +104,10 @@ function LayoutContent({ children, currentPageName }) {
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <div className="flex items-center gap-2">
-              {organization?.logo_url ? (
-                <img src={organization.logo_url} alt={organization.org_name} className="w-8 h-8 rounded-lg object-cover" />
-              ) : (
-                <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
-                  <GraduationCap className="w-5 h-5 text-white" />
-                </div>
-              )}
-              <span className="font-semibold text-slate-800">
-                {organization?.org_name || "Student Funds"}
-              </span>
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
+                <GraduationCap className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-semibold text-slate-800">Student Funds</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -111,20 +135,12 @@ function LayoutContent({ children, currentPageName }) {
           {/* Logo */}
           <div className="p-6 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              {organization?.logo_url ? (
-                <img src={organization.logo_url} alt={organization.org_name} className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-              ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                  <GraduationCap className="w-6 h-6 text-white" />
-                </div>
-              )}
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
               <div>
-                <h1 className="font-bold text-slate-800 text-lg">
-                  {organization?.org_name || "Student Funds"}
-                </h1>
-                <p className="text-xs text-slate-500">
-                  {user?.full_name}
-                </p>
+                <h1 className="font-bold text-slate-800 text-lg">Student Funds</h1>
+                <p className="text-xs text-slate-500 capitalize">{userRole} Portal</p>
               </div>
             </div>
           </div>
@@ -157,8 +173,8 @@ function LayoutContent({ children, currentPageName }) {
               <div className="hidden lg:flex justify-end">
                 <NotificationBell user={user} />
               </div>
-              )}
-              <div className="hidden lg:block">
+            )}
+            <div className="hidden lg:block">
               <UserDropdown user={user} handleLogout={handleLogout} fullWidth />
             </div>
           </div>
@@ -192,7 +208,7 @@ function UserDropdown({ user, handleLogout, fullWidth }) {
             {fullWidth && (
               <div className="flex-1 text-left">
                 <p className="font-medium text-slate-800 text-sm">{user?.full_name || "User"}</p>
-                <p className="text-xs text-slate-500">{user?.email}</p>
+                <p className="text-xs text-slate-500 capitalize">{user?.app_role || "student"}</p>
               </div>
             )}
             <ChevronDown className="w-4 h-4 text-slate-400" />
@@ -205,19 +221,18 @@ function UserDropdown({ user, handleLogout, fullWidth }) {
           <p className="text-xs text-slate-500">{user?.email}</p>
         </div>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to={createPageUrl("Profile")} className="cursor-pointer">
+            <UserIcon className="w-4 h-4 mr-2" />
+            Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
           <LogOut className="w-4 h-4 mr-2" />
           Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-export default function Layout({ children, currentPageName }) {
-  return (
-    <AuthProvider>
-      <LayoutContent children={children} currentPageName={currentPageName} />
-    </AuthProvider>
   );
 }

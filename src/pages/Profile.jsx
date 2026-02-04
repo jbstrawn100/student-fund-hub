@@ -59,8 +59,6 @@ export default function Profile() {
     admin: "bg-rose-100 text-rose-800 border-rose-200"
   };
 
-  const userRole = user?.staff_role || user?.app_role || "student";
-
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -92,10 +90,10 @@ export default function Profile() {
             <p className="text-slate-500">{user.email}</p>
             <Badge 
               variant="outline" 
-              className={`mt-3 capitalize ${roleColors[userRole] || roleColors.student}`}
+              className={`mt-3 capitalize ${roleColors[user.app_role] || roleColors.student}`}
             >
               <Shield className="w-3 h-3 mr-1" />
-              {userRole.replace("_", " ")}
+              {(user.app_role || "student").replace("_", " ")}
             </Badge>
           </div>
         </CardContent>
@@ -191,7 +189,7 @@ export default function Profile() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-slate-500">Role</p>
-              <p className="font-medium capitalize">{userRole.replace("_", " ")}</p>
+              <p className="font-medium capitalize">{(user.app_role || "student").replace("_", " ")}</p>
             </div>
             <div>
               <p className="text-slate-500">Status</p>
