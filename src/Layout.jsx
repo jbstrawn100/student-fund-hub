@@ -50,16 +50,7 @@ function LayoutContent({ children, currentPageName }) {
   ];
 
   const staffNavItems = [
-    { name: "Dashboard", icon: Home, page: "DashboardHome" },
-    { name: "Review Queue", icon: ClipboardList, page: "DashboardQueue" },
-    { name: "All Requests", icon: FileText, page: "DashboardRequests" },
-    { name: "Funds", icon: Wallet, page: "DashboardFunds" },
-    { name: "Reports", icon: BarChart3, page: "DashboardReports" },
-    ...(isFundManager ? [{ name: "Routing Rules", icon: Settings, page: "DashboardRules" }] : []),
-    ...(isAdmin ? [
-      { name: "Users", icon: Users, page: "DashboardUsers" },
-      { name: "Audit Log", icon: FileSearch, page: "DashboardAuditLog" }
-    ] : []),
+    { name: "Dashboard", icon: Home, page: "Home" },
   ];
 
   // Show staff nav only for staff users
