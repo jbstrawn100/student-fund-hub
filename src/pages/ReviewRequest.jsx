@@ -311,8 +311,7 @@ export default function ReviewRequest() {
     }
 
     // Create audit log
-    await base44.entities.AuditLog.create({
-      organization_id: organization.id,
+    await base44.entities.AuditLog.create(addOrgId({
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "DISBURSEMENT_CREATED",
