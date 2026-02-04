@@ -70,34 +70,21 @@ function LayoutContent({ children, currentPageName }) {
     { name: "Organizations", icon: Building2, page: "SuperAdminDashboard" },
   ];
 
-  const studentNavItems = [
-    { name: "Dashboard", icon: Home, page: "Home" },
-    { name: "Apply for Fund", icon: PlusCircle, page: "Apply" },
-    { name: "My Requests", icon: FileText, page: "MyRequests" },
-    { name: "Notifications", icon: FileText, page: "Notifications" },
-    { name: "Profile", icon: UserIcon, page: "Profile" },
-  ];
-
   const staffNavItems = [
-    { name: "Dashboard", icon: Home, page: "Home" },
-    { name: "Review Queue", icon: ClipboardList, page: "Queue" },
-    { name: "All Requests", icon: FileText, page: "MyRequests" },
-    { name: "Funds", icon: Wallet, page: "Funds" },
-    { name: "Reports", icon: BarChart3, page: "Reports" },
-    ...(isFundManager ? [{ name: "Routing Rules", icon: Settings, page: "Rules" }] : []),
+    { name: "Dashboard", icon: Home, page: "DashboardHome" },
+    { name: "Review Queue", icon: ClipboardList, page: "DashboardQueue" },
+    { name: "All Requests", icon: FileText, page: "DashboardRequests" },
+    { name: "Funds", icon: Wallet, page: "DashboardFunds" },
+    { name: "Reports", icon: BarChart3, page: "DashboardReports" },
+    ...(isFundManager ? [{ name: "Routing Rules", icon: Settings, page: "DashboardRules" }] : []),
     ...(isAdmin ? [
-      { name: "Users", icon: Users, page: "Users" },
-      { name: "Audit Log", icon: FileSearch, page: "AuditLog" }
+      { name: "Users", icon: Users, page: "DashboardUsers" },
+      { name: "Audit Log", icon: FileSearch, page: "DashboardAuditLog" }
     ] : []),
-    { name: "Notifications", icon: FileText, page: "Notifications" },
-    { name: "Profile", icon: UserIcon, page: "Profile" },
   ];
 
-  // If super admin is viewing an organization, show full staff nav
-  // Otherwise if super admin without org context, show super admin nav
-  const navItems = isSuperAdmin && !organization 
-    ? superAdminNavItems 
-    : (isStaff || isSuperAdmin ? staffNavItems : studentNavItems);
+  // Show staff nav only for staff users
+  const navItems = isStaff || isSuperAdmin ? staffNavItems : [];
 
   if (loading) {
     return (
@@ -108,6 +95,11 @@ function LayoutContent({ children, currentPageName }) {
         </div>
       </div>
     );
+  }
+
+  // For non-staff users, don't show the layout at all
+  if (!isStaff && !isSuperAdmin) {
+    return children;
   }
 
   // Super Admin viewing global dashboard (no sidebar, top nav only)
@@ -309,13 +301,6 @@ function UserDropdown({ user, handleLogout, fullWidth, orgPrefix }) {
           <p className="font-medium text-sm">{user?.full_name}</p>
           <p className="text-xs text-slate-500">{user?.email}</p>
         </div>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to={orgPrefix + createPageUrl("Profile")} className="cursor-pointer">
-            <UserIcon className="w-4 h-4 mr-2" />
-            Profile
-          </Link>
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
           <LogOut className="w-4 h-4 mr-2" />
