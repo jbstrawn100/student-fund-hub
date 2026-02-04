@@ -38,11 +38,10 @@ import {
   Eye
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
+import { useDataFilter } from "@/components/useDataFilter";
 
 export default function MyRequests() {
-  const orgFilter = useOrgFilter();
-  const orgPrefix = useOrgPrefix();
+  const dataFilter = useDataFilter();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -57,9 +56,9 @@ export default function MyRequests() {
   };
 
   const { data: requests = [], isLoading } = useQuery({
-    queryKey: ["myRequests", user?.id, orgFilter],
-    queryFn: () => base44.entities.FundRequest.filter({ ...orgFilter, student_user_id: user.id }, "-created_date"),
-    enabled: !!user?.id && !!orgFilter,
+    queryKey: ["myRequests", user?.id, dataFilter],
+    queryFn: () => base44.entities.FundRequest.filter({ ...(dataFilter || {}), student_user_id: user.id }, "-created_date"),
+    enabled: !!user?.id && dataFilter !== null,
   });
 
   const filteredRequests = requests.filter((request) => {
@@ -97,7 +96,7 @@ export default function MyRequests() {
         description="Track and manage your fund requests"
         actions={
           <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-            <Link to={orgPrefix + createPageUrl("Apply")}>
+            <Link to={createPageUrl("Apply")}>
               <PlusCircle className="w-4 h-4 mr-2" />
               New Request
             </Link>
@@ -209,7 +208,7 @@ export default function MyRequests() {
             action={
               requests.length === 0 && (
                 <Button asChild className="mt-4">
-                  <Link to={orgPrefix + createPageUrl("Apply")}>
+                  <Link to={createPageUrl("Apply")}>
                     <PlusCircle className="w-4 h-4 mr-2" />
                     Apply for Fund
                   </Link>
@@ -224,7 +223,7 @@ export default function MyRequests() {
               {filteredRequests.map((request) => (
                 <Link
                   key={request.id}
-                  to={orgPrefix + createPageUrl(`RequestDetail?id=${request.id}`)}
+                  to={createPageUrl(`RequestDetail?id=${request.id}`)}
                   className="block p-4 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -296,7 +295,7 @@ export default function MyRequests() {
                       </TableCell>
                       <TableCell>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link to={orgPrefix + createPageUrl(`RequestDetail?id=${request.id}`)}>
+                          <Link to={createPageUrl(`RequestDetail?id=${request.id}`)}>
                             <Eye className="w-4 h-4" />
                           </Link>
                         </Button>

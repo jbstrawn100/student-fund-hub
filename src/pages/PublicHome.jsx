@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LoadingSpinner from "@/components/shared/LoadingSpinner";
-import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
-import { useOrganization } from "@/components/OrganizationContext";
+import { useDataFilter } from "@/components/useDataFilter";
+import { useAuth } from "@/components/AuthContext";
 import {
   Wallet,
   Calendar,
@@ -21,9 +21,8 @@ import {
 import { format } from "date-fns";
 
 export default function PublicHome() {
-  const orgFilter = useOrgFilter();
-  const orgPrefix = useOrgPrefix();
-  const { organization } = useOrganization();
+  const dataFilter = useDataFilter();
+  const { organization } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,9 +43,9 @@ export default function PublicHome() {
   };
 
   const { data: activeFunds = [], isLoading } = useQuery({
-    queryKey: ["publicFunds", orgFilter],
-    queryFn: () => base44.entities.Fund.filter({ ...orgFilter, status: "active" }),
-    enabled: !!orgFilter,
+    queryKey: ["publicFunds", dataFilter],
+    queryFn: () => base44.entities.Fund.filter({ ...(dataFilter || {}), status: "active" }),
+    enabled: dataFilter !== null,
   });
 
   const filteredFunds = activeFunds.filter(fund =>
@@ -90,13 +89,13 @@ export default function PublicHome() {
                 <>
                   {isStaff && (
                     <Button asChild variant="outline">
-                      <Link to={`${orgPrefix}/dash/home`}>
+                      <Link to={createPageUrl("DashboardHome")}>
                         Dashboard
                       </Link>
                     </Button>
                   )}
                   <Button asChild>
-                    <Link to={`${orgPrefix}/account`}>
+                    <Link to={createPageUrl("Account")}>
                       My Account
                     </Link>
                   </Button>
@@ -200,7 +199,7 @@ export default function PublicHome() {
                     )}
                   </div>
                   <Button asChild className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
-                    <Link to={`${orgPrefix}/apply?fund=${fund.id}`}>
+                    <Link to={createPageUrl(`Apply?fund=${fund.id}`)}>
                       <FileText className="w-4 h-4 mr-2" />
                       Apply Now
                     </Link>

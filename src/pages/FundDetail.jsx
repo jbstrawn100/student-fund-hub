@@ -46,8 +46,8 @@ import {
   X
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrganization } from "@/components/OrganizationContext";
-import { useOrgPrefix } from "@/components/useOrgFilter";
+import { useAuth } from "@/components/AuthContext";
+import { useDataWithOrg } from "@/components/useDataFilter";
 
 const USE_CATEGORIES = [
   "Tuition/Fees",
@@ -63,8 +63,8 @@ const USE_CATEGORIES = [
 export default function FundDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { organization } = useOrganization();
-  const orgPrefix = useOrgPrefix();
+  const { organization } = useAuth();
+  const addOrgId = useDataWithOrg();
   const [user, setUser] = useState(null);
   const urlParams = new URLSearchParams(window.location.search);
   const fundId = urlParams.get("id");
@@ -149,15 +149,14 @@ export default function FundDetail() {
     await base44.entities.Fund.update(fundId, updateData);
 
     // Create audit log
-    await base44.entities.AuditLog.create({
-      organization_id: organization.id,
+    await base44.entities.AuditLog.create(addOrgId({
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "FUND_UPDATED",
       entity_type: "Fund",
       entity_id: fundId,
       details: JSON.stringify({ fund_name: formData.fund_name })
-    });
+    }));
 
     queryClient.invalidateQueries(["fund", fundId]);
     queryClient.invalidateQueries(["allFunds"]);
@@ -193,7 +192,7 @@ export default function FundDetail() {
       <div className="text-center py-16">
         <p className="text-slate-500">Fund not found</p>
         <Button asChild className="mt-4">
-          <Link to={orgPrefix + createPageUrl("Funds")}>Back to Funds</Link>
+          <Link to={createPageUrl("Funds")}>Back to Funds</Link>
         </Button>
       </div>
     );
@@ -208,7 +207,7 @@ export default function FundDetail() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={orgPrefix + createPageUrl("Funds")}>
+          <Link to={createPageUrl("Funds")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Funds
           </Link>

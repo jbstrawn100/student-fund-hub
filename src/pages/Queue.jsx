@@ -38,11 +38,10 @@ import {
   Clock
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
+import { useDataFilter } from "@/components/useDataFilter";
 
 export default function Queue() {
-  const orgFilter = useOrgFilter();
-  const orgPrefix = useOrgPrefix();
+  const dataFilter = useDataFilter();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("my_assigned");
@@ -62,21 +61,21 @@ export default function Queue() {
   };
 
   const { data: allRequests = [], isLoading } = useQuery({
-    queryKey: ["allRequests", orgFilter],
-    queryFn: () => base44.entities.FundRequest.filter(orgFilter, "-created_date"),
-    enabled: !!orgFilter,
+    queryKey: ["allRequests", dataFilter],
+    queryFn: () => base44.entities.FundRequest.filter(dataFilter || {}, "-created_date"),
+    enabled: dataFilter !== null,
   });
 
   const { data: funds = [] } = useQuery({
-    queryKey: ["allFunds", orgFilter],
-    queryFn: () => base44.entities.Fund.filter(orgFilter),
-    enabled: !!orgFilter,
+    queryKey: ["allFunds", dataFilter],
+    queryFn: () => base44.entities.Fund.filter(dataFilter || {}),
+    enabled: dataFilter !== null,
   });
 
   const { data: allReviews = [] } = useQuery({
-    queryKey: ["allReviews", orgFilter],
-    queryFn: () => base44.entities.Review.filter(orgFilter),
-    enabled: !!orgFilter,
+    queryKey: ["allReviews", dataFilter],
+    queryFn: () => base44.entities.Review.filter(dataFilter || {}),
+    enabled: dataFilter !== null,
   });
 
   // Calculate days since submission
@@ -267,7 +266,7 @@ export default function Queue() {
               {filteredRequests.map((request) => (
                 <Link
                   key={request.id}
-                  to={orgPrefix + createPageUrl(`ReviewRequest?id=${request.id}`)}
+                  to={createPageUrl(`ReviewRequest?id=${request.id}`)}
                   className="block p-4 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-2">
@@ -345,7 +344,7 @@ export default function Queue() {
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="sm" asChild>
-                            <Link to={orgPrefix + createPageUrl(`ReviewRequest?id=${request.id}`)}>
+                            <Link to={createPageUrl(`ReviewRequest?id=${request.id}`)}>
                               <ArrowRight className="w-4 h-4" />
                             </Link>
                           </Button>

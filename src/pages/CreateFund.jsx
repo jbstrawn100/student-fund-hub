@@ -15,8 +15,8 @@ import FieldSelector from "@/components/funds/FieldSelector";
 import CategoryManager from "@/components/funds/CategoryManager";
 import { DollarSign, Save, CheckCircle, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useOrganization } from "@/components/OrganizationContext";
-import { useOrgPrefix } from "@/components/useOrgFilter";
+import { useAuth } from "@/components/AuthContext";
+import { useDataWithOrg } from "@/components/useDataFilter";
 
 const DEFAULT_CATEGORIES = [
   "Tuition/Fees", "Books/Supplies", "Housing", "Food",
@@ -36,8 +36,8 @@ const DEFAULT_FIELDS = [
 
 export default function CreateFund() {
   const navigate = useNavigate();
-  const { organization } = useOrganization();
-  const orgPrefix = useOrgPrefix();
+  const { user: authUser, organization } = useAuth();
+  const addOrgId = useDataWithOrg();
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     fund_name: "",
@@ -90,8 +90,7 @@ export default function CreateFund() {
   const handleSubmit = async () => {
     setSubmitting(true);
 
-    const fundData = {
-      organization_id: organization.id,
+    const fundData = addOrgId({
       fund_name: formData.fund_name,
       description: formData.description,
       eligibility_notes: formData.eligibility_notes,
@@ -125,9 +124,9 @@ export default function CreateFund() {
         start_date: formData.start_date,
         end_date: formData.end_date
       })
-    });
+    }));
 
-    navigate(orgPrefix + createPageUrl(`FundDetail?id=${newFund.id}`));
+    navigate(createPageUrl(`FundDetail?id=${newFund.id}`));
   };
 
   if (!user) {
@@ -142,7 +141,7 @@ export default function CreateFund() {
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={orgPrefix + createPageUrl("Funds")}>
+          <Link to={createPageUrl("Funds")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Funds
           </Link>
@@ -314,7 +313,7 @@ export default function CreateFund() {
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
             <Button variant="outline" asChild>
-              <Link to={orgPrefix + createPageUrl("Funds")}>Cancel</Link>
+              <Link to={createPageUrl("Funds")}>Cancel</Link>
             </Button>
             <Button
               onClick={handleSubmit}

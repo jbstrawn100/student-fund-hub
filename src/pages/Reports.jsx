@@ -11,10 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Download, DollarSign, PieChart, TrendingUp, FileText, CheckCircle, XCircle, Clock, Wallet } from "lucide-react";
 import { format, startOfMonth, parseISO } from "date-fns";
 import { BarChart, Bar, PieChart as RechartPie, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
+import { useDataFilter } from "@/components/useDataFilter";
 
 export default function Reports() {
-  const orgFilter = useOrgFilter();
+  const dataFilter = useDataFilter();
   const [user, setUser] = useState(null);
   const [selectedFund, setSelectedFund] = useState("all");
   const [dateRange, setDateRange] = useState("all");
@@ -29,27 +29,27 @@ export default function Reports() {
   };
 
   const { data: requests = [] } = useQuery({
-    queryKey: ["allRequests", orgFilter],
-    queryFn: () => base44.entities.FundRequest.filter(orgFilter),
-    enabled: !!orgFilter,
+    queryKey: ["allRequests", dataFilter],
+    queryFn: () => base44.entities.FundRequest.filter(dataFilter || {}),
+    enabled: dataFilter !== null,
   });
 
   const { data: funds = [] } = useQuery({
-    queryKey: ["allFunds", orgFilter],
-    queryFn: () => base44.entities.Fund.filter(orgFilter),
-    enabled: !!orgFilter,
+    queryKey: ["allFunds", dataFilter],
+    queryFn: () => base44.entities.Fund.filter(dataFilter || {}),
+    enabled: dataFilter !== null,
   });
 
   const { data: disbursements = [] } = useQuery({
-    queryKey: ["allDisbursements", orgFilter],
-    queryFn: () => base44.entities.Disbursement.filter(orgFilter, "-paid_at"),
-    enabled: !!orgFilter,
+    queryKey: ["allDisbursements", dataFilter],
+    queryFn: () => base44.entities.Disbursement.filter(dataFilter || {}, "-paid_at"),
+    enabled: dataFilter !== null,
   });
 
   const { data: reviews = [] } = useQuery({
-    queryKey: ["allReviews", orgFilter],
-    queryFn: () => base44.entities.Review.filter(orgFilter),
-    enabled: !!orgFilter,
+    queryKey: ["allReviews", dataFilter],
+    queryFn: () => base44.entities.Review.filter(dataFilter || {}),
+    enabled: dataFilter !== null,
   });
 
   // Filter funds based on user role

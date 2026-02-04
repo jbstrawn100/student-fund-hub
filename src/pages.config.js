@@ -67,6 +67,7 @@ import DashboardUsers from './pages/DashboardUsers';
 import FundDetail from './pages/FundDetail';
 import Funds from './pages/Funds';
 import Home from './pages/Home';
+import MakeMeSuperAdmin from './pages/MakeMeSuperAdmin';
 import MyRequests from './pages/MyRequests';
 import Notifications from './pages/Notifications';
 import OrganizationDetail from './pages/OrganizationDetail';
@@ -80,7 +81,6 @@ import Rules from './pages/Rules';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminLayout from './pages/SuperAdminLayout';
 import Users from './pages/Users';
-import MakeMeSuperAdmin from './pages/MakeMeSuperAdmin';
 import __Layout from './Layout.jsx';
 
 
@@ -105,6 +105,7 @@ export const PAGES = {
     "FundDetail": FundDetail,
     "Funds": Funds,
     "Home": Home,
+    "MakeMeSuperAdmin": MakeMeSuperAdmin,
     "MyRequests": MyRequests,
     "Notifications": Notifications,
     "OrganizationDetail": OrganizationDetail,
@@ -118,7 +119,6 @@ export const PAGES = {
     "SuperAdminDashboard": SuperAdminDashboard,
     "SuperAdminLayout": SuperAdminLayout,
     "Users": Users,
-    "MakeMeSuperAdmin": MakeMeSuperAdmin,
 }
 
 export const pagesConfig = {

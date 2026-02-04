@@ -43,14 +43,14 @@ import {
   Upload
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrganization } from "@/components/OrganizationContext";
-import { useOrgPrefix } from "@/components/useOrgFilter";
+import { useAuth } from "@/components/AuthContext";
+import { useDataWithOrg } from "@/components/useDataFilter";
 
 export default function ReviewRequest() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { organization } = useOrganization();
-  const orgPrefix = useOrgPrefix();
+  const { organization } = useAuth();
+  const addOrgId = useDataWithOrg();
   const [user, setUser] = useState(null);
   const [reviewComments, setReviewComments] = useState("");
   const [decision, setDecision] = useState("");
@@ -198,8 +198,7 @@ export default function ReviewRequest() {
     });
 
     // Create audit log
-    await base44.entities.AuditLog.create({
-      organization_id: organization.id,
+    await base44.entities.AuditLog.create(addOrgId({
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: `REVIEW_${decision.toUpperCase().replace(" ", "_")}`,
@@ -211,7 +210,7 @@ export default function ReviewRequest() {
         step: currentReview.step_name,
         new_status: newStatus
       })
-    });
+    }));
 
     // Notify student
     const notificationTypes = {
@@ -239,18 +238,17 @@ export default function ReviewRequest() {
       }
 
       if (message) {
-        await base44.entities.Notification.create({
-          organization_id: organization.id,
+        await base44.entities.Notification.create(addOrgId({
           user_id: request.student_user_id,
           user_email: request.student_email,
           type: notifConfig.type,
           title: notifConfig.title,
           message: message,
-          link: orgPrefix + createPageUrl(`RequestDetail?id=${requestId}`),
+          link: createPageUrl(`RequestDetail?id=${requestId}`),
           related_entity_type: "FundRequest",
           related_entity_id: requestId,
           email_sent: true
-        });
+        }));
 
         await base44.integrations.Core.SendEmail({
           to: request.student_email,
@@ -282,8 +280,7 @@ export default function ReviewRequest() {
 
     const amountPaid = parseFloat(disbursementData.amount_paid);
 
-    await base44.entities.Disbursement.create({
-      organization_id: organization.id,
+    await base44.entities.Disbursement.create(addOrgId({
       fund_request_id: requestId,
       fund_id: request.fund_id,
       fund_name: request.fund_name,
@@ -293,7 +290,7 @@ export default function ReviewRequest() {
       payment_method: disbursementData.payment_method,
       notes: disbursementData.notes,
       receipt_upload: disbursementData.receipt_upload
-    });
+    }));
 
     // Calculate total disbursed for this request
     const allDisbursements = await base44.entities.Disbursement.filter({ fund_request_id: requestId });
@@ -328,22 +325,21 @@ export default function ReviewRequest() {
         requested_amount: request.requested_amount,
         new_status: newStatus
       })
-    });
+    }));
 
     // Notify student about payment
     const isPaidInFull = newStatus === "Paid";
-    await base44.entities.Notification.create({
-      organization_id: organization.id,
+    await base44.entities.Notification.create(addOrgId({
       user_id: request.student_user_id,
       user_email: request.student_email,
       type: "paid",
       title: isPaidInFull ? "Payment Processed ✓" : "Partial Payment Processed",
       message: `${isPaidInFull ? "Your full payment" : `A payment of $${amountPaid.toLocaleString()}`} for ${request.fund_name} has been processed via ${disbursementData.payment_method}.`,
-      link: orgPrefix + createPageUrl(`RequestDetail?id=${requestId}`),
+      link: createPageUrl(`RequestDetail?id=${requestId}`),
       related_entity_type: "FundRequest",
       related_entity_id: requestId,
       email_sent: true
-    });
+    }));
 
     await base44.integrations.Core.SendEmail({
       to: request.student_email,
@@ -378,7 +374,7 @@ export default function ReviewRequest() {
       <div className="text-center py-16">
         <p className="text-slate-500">Request not found</p>
         <Button asChild className="mt-4">
-          <Link to={orgPrefix + createPageUrl("Queue")}>Back to Queue</Link>
+          <Link to={createPageUrl("Queue")}>Back to Queue</Link>
         </Button>
       </div>
     );
@@ -412,7 +408,7 @@ export default function ReviewRequest() {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" asChild>
-          <Link to={orgPrefix + createPageUrl("Queue")}>
+          <Link to={createPageUrl("Queue")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Queue
           </Link>

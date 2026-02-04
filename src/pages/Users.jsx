@@ -53,8 +53,7 @@ import {
   UserCheck
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
-import { useOrganization } from "@/components/OrganizationContext";
+import { useDataFilter } from "@/components/useDataFilter";
 
 const roleColors = {
   student: "bg-blue-100 text-blue-800 border-blue-200",
@@ -74,8 +73,7 @@ const roleIcons = {
 
 export default function Users() {
   const queryClient = useQueryClient();
-  const orgFilter = useOrgFilter();
-  const { organization } = useOrganization();
+  const dataFilter = useDataFilter();
   const [currentUser, setCurrentUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -96,9 +94,9 @@ export default function Users() {
   };
 
   const { data: users = [], isLoading } = useQuery({
-    queryKey: ["allUsers", orgFilter],
-    queryFn: () => base44.entities.User.filter(orgFilter, "-created_date"),
-    enabled: !!orgFilter,
+    queryKey: ["allUsers", dataFilter],
+    queryFn: () => base44.entities.User.filter(dataFilter || {}, "-created_date"),
+    enabled: dataFilter !== null,
   });
 
   const filteredUsers = users.filter((user) => {
