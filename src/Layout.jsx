@@ -40,6 +40,7 @@ function LayoutContent({ children, currentPageName }) {
   const navItems = [
     { name: "Home", icon: Home, page: "Home" },
     { name: "Organizations", icon: Building2, page: "SuperAdminDashboard" },
+    { name: "Create Organization", icon: PlusCircle, page: "CreateOrganization" },
     { name: "Funds", icon: Wallet, page: "Apply" },
     { name: "My Requests", icon: FileText, page: "MyRequests" },
     { name: "Notifications", icon: Bell, page: "Notifications" },
