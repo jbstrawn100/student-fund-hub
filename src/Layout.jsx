@@ -93,11 +93,11 @@ function LayoutContent({ children, currentPageName }) {
     { name: "Profile", icon: UserIcon, page: "Profile" },
   ];
 
-  // If super admin is viewing an organization, show org-specific nav
+  // If super admin is viewing an organization, show full staff nav
   // Otherwise if super admin without org context, show super admin nav
   const navItems = isSuperAdmin && !organization 
     ? superAdminNavItems 
-    : (isStaff ? staffNavItems : studentNavItems);
+    : (isStaff || isSuperAdmin ? staffNavItems : studentNavItems);
 
   if (loading) {
     return (
