@@ -47,8 +47,8 @@ import {
   File
 } from "lucide-react";
 import { format } from "date-fns";
-import { useOrgFilter, useOrgPrefix } from "@/components/useOrgFilter";
-import { useOrganization } from "@/components/OrganizationContext";
+import { useDataFilter, useDataWithOrg } from "@/components/useDataFilter";
+import { useAuth } from "@/components/AuthContext";
 
 const DEFAULT_CATEGORIES = [
   "Tuition/Fees",
@@ -74,9 +74,9 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export default function Apply() {
   const navigate = useNavigate();
-  const { organization } = useOrganization();
-  const orgFilter = useOrgFilter();
-  const orgPrefix = useOrgPrefix();
+  const { organization } = useAuth();
+  const dataFilter = useDataFilter();
+  const addOrgId = useDataWithOrg();
   const [user, setUser] = useState(null);
   const [selectedFund, setSelectedFund] = useState(null);
   const [formData, setFormData] = useState({
@@ -119,9 +119,9 @@ export default function Apply() {
   };
 
   const { data: funds = [], isLoading } = useQuery({
-    queryKey: ["activeFunds", orgFilter],
-    queryFn: () => base44.entities.Fund.filter({ ...orgFilter, status: "active" }),
-    enabled: !!orgFilter,
+    queryKey: ["activeFunds", dataFilter],
+    queryFn: () => base44.entities.Fund.filter({ ...(dataFilter || {}), status: "active" }),
+    enabled: dataFilter !== null,
   });
 
   useEffect(() => {
@@ -261,15 +261,15 @@ export default function Apply() {
     const year = new Date().getFullYear();
     
     // Get count of requests this year for this org to generate sequence
-    const allRequests = await base44.entities.FundRequest.filter(orgFilter);
+    const allRequests = await base44.entities.FundRequest.filter(dataFilter || {});
     const thisYearRequests = allRequests.filter(r => {
       const requestYear = new Date(r.created_date).getFullYear();
       return requestYear === year;
     });
     
     const sequence = (thisYearRequests.length + 1).toString().padStart(6, '0');
-    const orgPrefix = organization?.subdomain?.toUpperCase().slice(0, 3) || "ORG";
-    return `${orgPrefix}-${year}-${sequence}`;
+    const orgCode = organization?.subdomain?.toUpperCase().slice(0, 3) || "ORG";
+    return `${orgCode}-${year}-${sequence}`;
   };
 
   const handleSaveAsDraft = async () => {
@@ -384,8 +384,7 @@ export default function Apply() {
       // Create one review record per reviewer or one for the queue
       if (reviewerIds.length > 0) {
         for (let i = 0; i < reviewerIds.length; i++) {
-          await base44.entities.Review.create({
-            organization_id: organization.id,
+          await base44.entities.Review.create(addOrgId({
             fund_request_id: newRequest.id,
             reviewer_user_id: reviewerIds[i],
             reviewer_name: reviewerNames[i] || "Reviewer",
@@ -395,7 +394,7 @@ export default function Apply() {
             comments: "",
             permissions: rule.permissions,
             sla_target_days: rule.sla_target_days
-          });
+          }));
         }
       }
     }
@@ -410,8 +409,7 @@ export default function Apply() {
     }
 
     // Create audit log
-    await base44.entities.AuditLog.create({
-      organization_id: organization.id,
+    await base44.entities.AuditLog.create(addOrgId({
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "REQUEST_SUBMITTED",
@@ -422,10 +420,10 @@ export default function Apply() {
         fund_name: selectedFund.fund_name, 
         amount: formData.requested_amount 
       })
-    });
+    }));
 
     setShowConfirmModal(false);
-    navigate(orgPrefix + createPageUrl(`RequestDetail?id=${newRequest.id}`));
+    navigate(createPageUrl(`RequestDetail?id=${newRequest.id}`));
   };
 
   if (!user) {
