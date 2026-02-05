@@ -9,14 +9,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { Building2, Plus, Pencil, Upload } from "lucide-react";
+import { Building2, Plus, Pencil, Upload, Wallet, Users, Copy, Check } from "lucide-react";
+import { format } from "date-fns";
 
 export default function SuperAdminDashboard() {
   const [user, setUser] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
   const [editingOrg, setEditingOrg] = useState(null);
+  const [viewingOrg, setViewingOrg] = useState(null);
+  const [managementView, setManagementView] = useState("funds"); // "funds" or "users"
   const [uploading, setUploading] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -39,6 +45,18 @@ export default function SuperAdminDashboard() {
   const { data: organizations = [], isLoading } = useQuery({
     queryKey: ["organizations"],
     queryFn: () => base44.entities.Organization.list("-created_date"),
+  });
+
+  const { data: orgFunds = [] } = useQuery({
+    queryKey: ["orgFunds", viewingOrg?.id],
+    queryFn: () => base44.entities.Fund.filter({ organization_id: viewingOrg.id }, "-created_date"),
+    enabled: !!viewingOrg?.id,
+  });
+
+  const { data: orgUsers = [] } = useQuery({
+    queryKey: ["orgUsers", viewingOrg?.id],
+    queryFn: () => base44.entities.User.filter({ organization_id: viewingOrg.id }, "-created_date"),
+    enabled: !!viewingOrg?.id,
   });
 
   const saveOrganization = useMutation({
@@ -101,6 +119,12 @@ export default function SuperAdminDashboard() {
     });
   };
 
+  const copyToClipboard = (text, id) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -159,6 +183,7 @@ export default function SuperAdminDashboard() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Organization</TableHead>
+                    <TableHead>ID</TableHead>
                     <TableHead>Slug</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
@@ -181,6 +206,19 @@ export default function SuperAdminDashboard() {
                           <span>{org.name}</span>
                         </div>
                       </TableCell>
+                      <TableCell>
+                        <button
+                          onClick={() => copyToClipboard(org.id, org.id)}
+                          className="font-mono text-xs text-slate-600 hover:text-slate-900 flex items-center gap-2"
+                        >
+                          {org.id.substring(0, 8)}...
+                          {copiedId === org.id ? (
+                            <Check className="w-3 h-3 text-green-600" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                        </button>
+                      </TableCell>
                       <TableCell className="font-mono text-sm text-slate-600">{org.slug}</TableCell>
                       <TableCell className="max-w-md">
                         <p className="text-sm text-slate-600 line-clamp-2">{org.description || "-"}</p>
@@ -192,10 +230,15 @@ export default function SuperAdminDashboard() {
                         {new Date(org.created_date).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Button size="sm" variant="outline" onClick={() => openEditDialog(org)}>
-                          <Pencil className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => openEditDialog(org)}>
+                            <Pencil className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setViewingOrg(org)}>
+                            Manage
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -281,7 +324,149 @@ export default function SuperAdminDashboard() {
                   {editingOrg ? "Update" : "Create"} Organization
                 </Button>
               </div>
+              {editingOrg && (
+                <div className="bg-slate-50 -mx-6 -mt-4 mb-4 px-6 py-3 border-b">
+                  <p className="text-xs text-slate-500">Organization ID</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <code className="text-sm font-mono text-slate-700">{editingOrg.id}</code>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(editingOrg.id, "dialog-" + editingOrg.id)}
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      {copiedId === "dialog-" + editingOrg.id ? (
+                        <Check className="w-3 h-3 text-green-600" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Organization Management Dialog */}
+        <Dialog open={!!viewingOrg} onOpenChange={() => setViewingOrg(null)}>
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                {viewingOrg?.logo ? (
+                  <img src={viewingOrg.logo} alt={viewingOrg.name} className="w-8 h-8 rounded object-cover" />
+                ) : (
+                  <Building2 className="w-6 h-6 text-purple-600" />
+                )}
+                {viewingOrg?.name}
+              </DialogTitle>
+              <div className="flex items-center gap-2 mt-2">
+                <code className="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-1 rounded">
+                  {viewingOrg?.id}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(viewingOrg?.id, "view-" + viewingOrg?.id)}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  {copiedId === "view-" + viewingOrg?.id ? (
+                    <Check className="w-3 h-3 text-green-600" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+            </DialogHeader>
+
+            <Tabs value={managementView} onValueChange={setManagementView}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="funds">
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Funds ({orgFunds.length})
+                </TabsTrigger>
+                <TabsTrigger value="users">
+                  <Users className="w-4 h-4 mr-2" />
+                  Users ({orgUsers.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="funds" className="space-y-4">
+                {orgFunds.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500">
+                    <Wallet className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                    <p>No funds created yet</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Fund Name</TableHead>
+                        <TableHead>Budget</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Owner</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {orgFunds.map((fund) => (
+                        <TableRow key={fund.id}>
+                          <TableCell className="font-medium">{fund.fund_name}</TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <p className="font-medium">${fund.total_budget?.toLocaleString()}</p>
+                              <p className="text-slate-500">
+                                ${fund.remaining_budget?.toLocaleString()} remaining
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge status={fund.status} />
+                          </TableCell>
+                          <TableCell className="text-sm">{fund.fund_owner_name || "-"}</TableCell>
+                          <TableCell className="text-sm text-slate-500">
+                            {format(new Date(fund.created_date), "MMM d, yyyy")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </TabsContent>
+
+              <TabsContent value="users" className="space-y-4">
+                {orgUsers.length === 0 ? (
+                  <div className="text-center py-12 text-slate-500">
+                    <Users className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                    <p>No users yet</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Student ID</TableHead>
+                        <TableHead>Joined</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {orgUsers.map((u) => (
+                        <TableRow key={u.id}>
+                          <TableCell className="font-medium">{u.full_name}</TableCell>
+                          <TableCell className="text-sm">{u.email}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{u.app_role || "student"}</Badge>
+                          </TableCell>
+                          <TableCell className="text-sm text-slate-600">{u.student_id || "-"}</TableCell>
+                          <TableCell className="text-sm text-slate-500">
+                            {format(new Date(u.created_date), "MMM d, yyyy")}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       </div>
