@@ -101,7 +101,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
-              <Link to={createPageUrl("Home")} className="flex items-center gap-3">
+              <Link to={createPageUrl("Apply")} className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
                   <GraduationCap className="w-5 h-5 text-white" />
                 </div>
