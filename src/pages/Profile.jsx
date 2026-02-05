@@ -14,7 +14,9 @@ import {
   GraduationCap,
   Shield,
   Save,
-  CheckCircle
+  CheckCircle,
+  Building2,
+  Copy
 } from "lucide-react";
 
 export default function Profile() {
@@ -49,6 +51,10 @@ export default function Profile() {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
   };
 
   const roleColors = {
@@ -205,6 +211,35 @@ export default function Profile() {
               <p className="text-slate-500">Account Type</p>
               <p className="font-medium capitalize">{user.role}</p>
             </div>
+            {user.organization_id && (
+              <>
+                <div className="col-span-2">
+                  <p className="text-slate-500 mb-2 flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Organization ID
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 px-3 py-2 bg-slate-50 rounded-lg text-xs font-mono text-slate-700 border border-slate-200">
+                      {user.organization_id}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(user.organization_id)}
+                      className="shrink-0"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                {user.organization_name && (
+                  <div className="col-span-2">
+                    <p className="text-slate-500">Organization</p>
+                    <p className="font-medium">{user.organization_name}</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
