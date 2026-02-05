@@ -56,14 +56,14 @@ import Home from './pages/Home';
 import MyRequests from './pages/MyRequests';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
+import PublicHome from './pages/PublicHome';
 import Queue from './pages/Queue';
 import Reports from './pages/Reports';
 import RequestDetail from './pages/RequestDetail';
 import ReviewRequest from './pages/ReviewRequest';
 import Rules from './pages/Rules';
-import Users from './pages/Users';
-import PublicHome from './pages/PublicHome';
 import Settings from './pages/Settings';
+import Users from './pages/Users';
 import __Layout from './Layout.jsx';
 
 
@@ -77,14 +77,14 @@ export const PAGES = {
     "MyRequests": MyRequests,
     "Notifications": Notifications,
     "Profile": Profile,
+    "PublicHome": PublicHome,
     "Queue": Queue,
     "Reports": Reports,
     "RequestDetail": RequestDetail,
     "ReviewRequest": ReviewRequest,
     "Rules": Rules,
-    "Users": Users,
-    "PublicHome": PublicHome,
     "Settings": Settings,
+    "Users": Users,
 }
 
 export const pagesConfig = {

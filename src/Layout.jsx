@@ -47,6 +47,10 @@ export default function Layout({ children, currentPageName }) {
       setUser(currentUser);
     } catch (error) {
       console.error("Error loading user:", error);
+      // Redirect to PublicHome if not authenticated (unless already there)
+      if (currentPageName !== "PublicHome") {
+        navigate(createPageUrl("PublicHome"));
+      }
     } finally {
       setLoading(false);
     }
@@ -81,6 +85,11 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   const navItems = isStaff ? staffNavItems : studentNavItems;
+
+  // PublicHome doesn't need layout
+  if (currentPageName === "PublicHome") {
+    return children;
+  }
 
   if (loading) {
     return (
