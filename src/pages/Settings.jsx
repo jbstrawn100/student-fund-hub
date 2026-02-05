@@ -157,6 +157,17 @@ export default function Settings() {
               <CardTitle>Organization Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
+              {user?.organization_id && (
+                <div className="space-y-2">
+                  <Label>Organization ID</Label>
+                  <Input
+                    value={user.organization_id}
+                    disabled
+                    className="bg-slate-50 text-slate-500"
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label>Organization Name *</Label>
                 <Input
