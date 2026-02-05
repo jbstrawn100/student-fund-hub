@@ -17,7 +17,8 @@ import {
   ChevronDown,
   User as UserIcon,
   Home,
-  FileSearch
+  FileSearch,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,6 +92,119 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
+  // Student layout - top navigation only
+  if (!isStaff) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+        {/* Top Navigation */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              {/* Logo */}
+              <Link to={createPageUrl("Home")} className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                  <GraduationCap className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-bold text-slate-800 text-lg hidden sm:block">Student Funds</span>
+              </Link>
+
+              {/* Main Navigation */}
+              <nav className="hidden md:flex items-center gap-1">
+                <Link to={createPageUrl("Apply")}>
+                  <Button
+                    variant="ghost"
+                    className={`${
+                      currentPageName === "Apply"
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Apply
+                  </Button>
+                </Link>
+                <Link to={createPageUrl("MyRequests")}>
+                  <Button
+                    variant="ghost"
+                    className={`${
+                      currentPageName === "MyRequests" || currentPageName === "RequestDetail"
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    My Requests
+                  </Button>
+                </Link>
+              </nav>
+
+              {/* Right Side - Notifications + Profile */}
+              <div className="flex items-center gap-2">
+                {user && <NotificationBell user={user} />}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-auto p-2 hover:bg-slate-100 rounded-xl">
+                      <Avatar className="h-8 w-8 border-2 border-indigo-100">
+                        <AvatarFallback className="bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700 font-semibold text-sm">
+                          {user?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-3 py-2">
+                      <p className="font-medium text-sm">{user?.full_name}</p>
+                      <p className="text-xs text-slate-500">{user?.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild className="md:hidden">
+                      <Link to={createPageUrl("Apply")} className="cursor-pointer">
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                        Apply
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="md:hidden">
+                      <Link to={createPageUrl("MyRequests")} className="cursor-pointer">
+                        <FileText className="w-4 h-4 mr-2" />
+                        My Requests
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="md:hidden" />
+                    <DropdownMenuItem asChild>
+                      <Link to={createPageUrl("Notifications")} className="cursor-pointer">
+                        <Bell className="w-4 h-4 mr-2" />
+                        Notifications
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to={createPageUrl("Profile")} className="cursor-pointer">
+                        <UserIcon className="w-4 h-4 mr-2" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="min-h-screen pt-16">
+          <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            {children}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Staff layout - sidebar navigation
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Mobile Header */}
