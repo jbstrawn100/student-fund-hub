@@ -75,7 +75,8 @@ export default function Layout({ children, currentPageName }) {
     ...(isFundManager ? [{ name: "Routing Rules", icon: Settings, page: "Rules" }] : []),
     ...(isAdmin ? [
       { name: "Users", icon: Users, page: "Users" },
-      { name: "Audit Log", icon: FileSearch, page: "AuditLog" }
+      { name: "Audit Log", icon: FileSearch, page: "AuditLog" },
+      { name: "Settings", icon: Settings, page: "Settings" }
     ] : []),
   ];
 

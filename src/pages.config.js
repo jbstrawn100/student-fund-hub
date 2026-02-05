@@ -62,6 +62,8 @@ import RequestDetail from './pages/RequestDetail';
 import ReviewRequest from './pages/ReviewRequest';
 import Rules from './pages/Rules';
 import Users from './pages/Users';
+import PublicHome from './pages/PublicHome';
+import Settings from './pages/Settings';
 import __Layout from './Layout.jsx';
 
 
@@ -81,6 +83,8 @@ export const PAGES = {
     "ReviewRequest": ReviewRequest,
     "Rules": Rules,
     "Users": Users,
+    "PublicHome": PublicHome,
+    "Settings": Settings,
 }
 
 export const pagesConfig = {
