@@ -59,18 +59,21 @@ export default function Home() {
 
 function StaffDashboard({ user }) {
   const { data: allRequests = [], isLoading } = useQuery({
-    queryKey: ["allRequests"],
-    queryFn: () => base44.entities.FundRequest.list("-created_date"),
+    queryKey: ["allRequests", user?.organization_id],
+    queryFn: () => base44.entities.FundRequest.filter({ organization_id: user.organization_id }, "-created_date"),
+    enabled: !!user?.organization_id,
   });
 
   const { data: funds = [] } = useQuery({
-    queryKey: ["allFunds"],
-    queryFn: () => base44.entities.Fund.list(),
+    queryKey: ["allFunds", user?.organization_id],
+    queryFn: () => base44.entities.Fund.filter({ organization_id: user.organization_id }),
+    enabled: !!user?.organization_id,
   });
 
   const { data: disbursements = [] } = useQuery({
-    queryKey: ["disbursements"],
-    queryFn: () => base44.entities.Disbursement.list(),
+    queryKey: ["disbursements", user?.organization_id],
+    queryFn: () => base44.entities.Disbursement.filter({ organization_id: user.organization_id }),
+    enabled: !!user?.organization_id,
   });
 
   const stats = {
