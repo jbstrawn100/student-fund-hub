@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
@@ -21,21 +21,30 @@ export default function PublicHome() {
     reason: ""
   });
   const [submitted, setSubmitted] = useState(false);
+  const [orgSlug, setOrgSlug] = useState("");
 
-  const { data: settings } = useQuery({
-    queryKey: ["appSettings"],
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("org");
+    setOrgSlug(slug || "");
+  }, []);
+
+  const { data: organization } = useQuery({
+    queryKey: ["organization", orgSlug],
     queryFn: async () => {
-      const allSettings = await base44.entities.AppSettings.list();
-      return allSettings[0] || {
-        organization_name: "Student Funds",
-        organization_description: "Apply for financial assistance to support your educational journey.",
-        welcome_message: "Welcome! Request access to submit your fund application."
-      };
+      if (!orgSlug) return null;
+      const orgs = await base44.entities.Organization.filter({ slug: orgSlug });
+      return orgs[0] || null;
     },
+    enabled: !!orgSlug,
   });
 
   const submitRequest = useMutation({
-    mutationFn: (data) => base44.entities.AccessRequest.create(data),
+    mutationFn: (data) => base44.entities.AccessRequest.create({
+      ...data,
+      organization_id: organization?.id,
+      organization_name: organization?.name
+    }),
     onSuccess: () => {
       setSubmitted(true);
     },
@@ -50,7 +59,20 @@ export default function PublicHome() {
     base44.auth.redirectToLogin(createPageUrl("Home"));
   };
 
-  if (!settings) {
+  if (!orgSlug) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <p className="text-slate-600 mb-4">Please provide an organization identifier</p>
+            <p className="text-sm text-slate-500">Add ?org=organization-slug to the URL</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!organization) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner size="lg" />
@@ -65,14 +87,14 @@ export default function PublicHome() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              {settings.organization_logo ? (
-                <img src={settings.organization_logo} alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
+              {organization.logo ? (
+                <img src={organization.logo} alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
               ) : (
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
                   <GraduationCap className="w-6 h-6 text-white" />
                 </div>
               )}
-              <span className="font-bold text-slate-800 text-lg">{settings.organization_name}</span>
+              <span className="font-bold text-slate-800 text-lg">{organization.name}</span>
             </div>
             <Button onClick={handleLogin} variant="outline">
               <LogIn className="w-4 h-4 mr-2" />
@@ -86,16 +108,16 @@ export default function PublicHome() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          {settings.organization_logo && (
+          {organization.logo && (
             <div className="flex justify-center mb-8">
-              <img src={settings.organization_logo} alt="Logo" className="w-24 h-24 rounded-2xl object-cover shadow-xl" />
+              <img src={organization.logo} alt="Logo" className="w-24 h-24 rounded-2xl object-cover shadow-xl" />
             </div>
           )}
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-            {settings.organization_name}
+            {organization.name}
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            {settings.organization_description}
+            {organization.description || "Apply for financial assistance to support your educational journey."}
           </p>
         </div>
 
@@ -103,7 +125,7 @@ export default function PublicHome() {
         <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 shadow-xl">
           <CardHeader>
             <CardTitle className="text-2xl text-center">
-              {submitted ? "Request Submitted!" : settings.welcome_message || "Request Access"}
+              {submitted ? "Request Submitted!" : organization.welcome_message || "Request Access"}
             </CardTitle>
           </CardHeader>
           <CardContent>

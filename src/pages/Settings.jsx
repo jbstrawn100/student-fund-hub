@@ -45,7 +45,11 @@ export default function Settings() {
 
   const { data: accessRequests = [] } = useQuery({
     queryKey: ["accessRequests"],
-    queryFn: () => base44.entities.AccessRequest.list("-created_date"),
+    queryFn: async () => {
+      if (!user?.organization_id) return [];
+      return base44.entities.AccessRequest.filter({ organization_id: user.organization_id }, "-created_date");
+    },
+    enabled: !!user?.organization_id,
   });
 
   useEffect(() => {

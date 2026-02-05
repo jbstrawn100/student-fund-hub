@@ -48,7 +48,7 @@ export default function Layout({ children, currentPageName }) {
     } catch (error) {
       console.error("Error loading user:", error);
       // Redirect to PublicHome if not authenticated (unless already there)
-      if (currentPageName !== "PublicHome") {
+      if (currentPageName !== "PublicHome" && currentPageName !== "SuperAdminDashboard") {
         navigate(createPageUrl("PublicHome"));
       }
     } finally {
@@ -86,8 +86,8 @@ export default function Layout({ children, currentPageName }) {
 
   const navItems = isStaff ? staffNavItems : studentNavItems;
 
-  // PublicHome doesn't need layout
-  if (currentPageName === "PublicHome") {
+  // PublicHome and SuperAdminDashboard don't need layout
+  if (currentPageName === "PublicHome" || currentPageName === "SuperAdminDashboard") {
     return children;
   }
 

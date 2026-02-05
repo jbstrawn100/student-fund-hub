@@ -64,6 +64,7 @@ import ReviewRequest from './pages/ReviewRequest';
 import Rules from './pages/Rules';
 import Settings from './pages/Settings';
 import Users from './pages/Users';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -85,6 +86,7 @@ export const PAGES = {
     "Rules": Rules,
     "Settings": Settings,
     "Users": Users,
+    "SuperAdminDashboard": SuperAdminDashboard,
 }
 
 export const pagesConfig = {
