@@ -287,6 +287,7 @@ export default function Apply() {
     const requestId = await generateRequestId();
 
     const requestData = {
+      organization_id: selectedFund.organization_id,
       request_id: requestId,
       fund_id: selectedFund.id,
       fund_name: selectedFund.fund_name,
@@ -324,6 +325,7 @@ export default function Apply() {
     const requestId = await generateRequestId();
 
     const requestData = {
+      organization_id: selectedFund.organization_id,
       request_id: requestId,
       fund_id: selectedFund.id,
       fund_name: selectedFund.fund_name,
@@ -383,6 +385,7 @@ export default function Apply() {
       if (reviewerIds.length > 0) {
         for (let i = 0; i < reviewerIds.length; i++) {
           await base44.entities.Review.create({
+            organization_id: selectedFund.organization_id,
             fund_request_id: newRequest.id,
             reviewer_user_id: reviewerIds[i],
             reviewer_name: reviewerNames[i] || "Reviewer",
@@ -408,6 +411,7 @@ export default function Apply() {
 
     // Create audit log
     await base44.entities.AuditLog.create({
+      organization_id: selectedFund.organization_id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "REQUEST_SUBMITTED",
