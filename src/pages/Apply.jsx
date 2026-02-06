@@ -162,15 +162,22 @@ export default function Apply() {
           delete newErrors.intended_use_category;
         }
         break;
+      case "student_phone":
+        if ((selectedFund?.application_fields?.phone?.required ?? false) && !value?.trim()) {
+          newErrors.student_phone = "Phone number is required";
+        } else {
+          delete newErrors.student_phone;
+        }
+        break;
       case "intended_use_description":
-        if (!value || value.trim().length < 30) {
+        if ((selectedFund?.application_fields?.intended_use_description?.required ?? true) && (!value || value.trim().length < 30)) {
           newErrors.intended_use_description = "Description must be at least 30 characters";
         } else {
           delete newErrors.intended_use_description;
         }
         break;
       case "justification_paragraph":
-        if (!value || value.trim().length < 100) {
+        if ((selectedFund?.application_fields?.justification_paragraph?.required ?? true) && (!value || value.trim().length < 100)) {
           newErrors.justification_paragraph = "Justification must be at least 100 characters";
         } else {
           delete newErrors.justification_paragraph;
@@ -529,9 +536,10 @@ export default function Apply() {
     parseFloat(formData.requested_amount) > 0 &&
     formData.intended_use_category &&
     isCategoryAllowed &&
-    (!(selectedFund.application_fields?.intended_use_description ?? true) || formData.intended_use_description?.length >= 30) &&
-    (!(selectedFund.application_fields?.justification_paragraph ?? true) || formData.justification_paragraph?.length >= 100) &&
-    (!selectedFund?.requires_attachments || formData.attachments.length > 0) &&
+    (!(selectedFund.application_fields?.phone?.required ?? false) || formData.student_phone?.trim()) &&
+    (!(selectedFund.application_fields?.intended_use_description?.required ?? true) || formData.intended_use_description?.length >= 30) &&
+    (!(selectedFund.application_fields?.justification_paragraph?.required ?? true) || formData.justification_paragraph?.length >= 100) &&
+    (!(selectedFund.application_fields?.attachments?.required ?? false) || formData.attachments.length > 0) &&
     Object.keys(errors).length === 0;
 
   return (
@@ -615,9 +623,9 @@ export default function Apply() {
                 />
               </div>
 
-              {(selectedFund.application_fields?.phone ?? true) && (
+              {(selectedFund.application_fields?.phone?.enabled ?? true) && (
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone">Phone Number {(selectedFund.application_fields?.phone?.required ?? false) && "*"}</Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -696,10 +704,10 @@ export default function Apply() {
               </div>
             </div>
 
-            {(selectedFund.application_fields?.intended_use_description ?? true) && (
+            {(selectedFund.application_fields?.intended_use_description?.enabled ?? true) && (
               <div className="space-y-2">
                 <Label htmlFor="useDescription">
-                  How will you use these funds? * (minimum 30 characters)
+                  How will you use these funds? {(selectedFund.application_fields?.intended_use_description?.required ?? true) && "*"} (minimum 30 characters)
                   {errors.intended_use_description && (
                     <span className="text-red-600 text-xs ml-2">{errors.intended_use_description}</span>
                   )}
@@ -718,10 +726,10 @@ export default function Apply() {
               </div>
             )}
 
-            {(selectedFund.application_fields?.justification_paragraph ?? true) && (
+            {(selectedFund.application_fields?.justification_paragraph?.enabled ?? true) && (
               <div className="space-y-2">
                 <Label htmlFor="justification">
-                  Why do you deserve these funds? * (minimum 100 characters)
+                  Why do you deserve these funds? {(selectedFund.application_fields?.justification_paragraph?.required ?? true) && "*"} (minimum 100 characters)
                   {errors.justification_paragraph && (
                     <span className="text-red-600 text-xs ml-2">{errors.justification_paragraph}</span>
                   )}
@@ -742,15 +750,15 @@ export default function Apply() {
           </div>
 
           {/* Attachments */}
-          {(selectedFund.application_fields?.attachments ?? true) && (
+          {(selectedFund.application_fields?.attachments?.enabled ?? true) && (
             <div className="space-y-4 pt-4 border-t">
               <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                 <Paperclip className="w-4 h-4" />
-                Supporting Documents {selectedFund?.requires_attachments && <span className="text-red-600">*</span>}
+                Supporting Documents {(selectedFund.application_fields?.attachments?.required ?? false) && <span className="text-red-600">*</span>}
               </h3>
             <p className="text-sm text-slate-500">
               Upload any supporting documents (PDF, JPG, PNG, DOC - max 10MB per file)
-              {selectedFund?.requires_attachments && (
+              {(selectedFund.application_fields?.attachments?.required ?? false) && (
                 <span className="text-amber-600 font-medium"> - Required for this fund</span>
               )}
             </p>

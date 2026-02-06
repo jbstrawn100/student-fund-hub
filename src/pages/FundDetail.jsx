@@ -68,10 +68,10 @@ export default function FundDetail() {
   const [isEditing, setIsEditing] = useState(editMode);
   const [formData, setFormData] = useState({
     application_fields: {
-      phone: true,
-      intended_use_description: true,
-      justification_paragraph: true,
-      attachments: true
+      phone: { enabled: true, required: false },
+      intended_use_description: { enabled: true, required: true },
+      justification_paragraph: { enabled: true, required: true },
+      attachments: { enabled: true, required: false }
     }
   });
   const [submitting, setSubmitting] = useState(false);
@@ -118,10 +118,10 @@ export default function FundDetail() {
         budget_enforcement: fund.budget_enforcement || "warn",
         status: fund.status,
         application_fields: fund.application_fields || {
-          phone: true,
-          intended_use_description: true,
-          justification_paragraph: true,
-          attachments: true
+          phone: { enabled: true, required: false },
+          intended_use_description: { enabled: true, required: true },
+          justification_paragraph: { enabled: true, required: true },
+          attachments: { enabled: true, required: false }
         }
       });
     }
@@ -518,60 +518,140 @@ export default function FundDetail() {
               <p className="text-sm text-slate-500">Choose which fields appear in the student application form</p>
               
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div>
-                    <Label className="text-sm">Phone Number</Label>
-                    <p className="text-xs text-slate-500">Collect student phone number</p>
+                <div className="p-3 bg-slate-50 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Phone Number</Label>
+                      <p className="text-xs text-slate-500">Collect student phone number</p>
+                    </div>
+                    <Switch
+                      checked={formData.application_fields?.phone?.enabled ?? true}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        application_fields: { 
+                          ...formData.application_fields, 
+                          phone: { ...(formData.application_fields?.phone || {}), enabled: checked }
+                        }
+                      })}
+                    />
                   </div>
-                  <Switch
-                    checked={formData.application_fields?.phone ?? true}
-                    onCheckedChange={(checked) => setFormData({ 
-                      ...formData, 
-                      application_fields: { ...formData.application_fields, phone: checked }
-                    })}
-                  />
+                  {(formData.application_fields?.phone?.enabled ?? true) && (
+                    <div className="flex items-center justify-between pl-4 pt-2 border-t">
+                      <Label className="text-xs text-slate-600">Required</Label>
+                      <Switch
+                        checked={formData.application_fields?.phone?.required ?? false}
+                        onCheckedChange={(checked) => setFormData({ 
+                          ...formData, 
+                          application_fields: { 
+                            ...formData.application_fields, 
+                            phone: { ...(formData.application_fields?.phone || {}), required: checked }
+                          }
+                        })}
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div>
-                    <Label className="text-sm">Intended Use Description</Label>
-                    <p className="text-xs text-slate-500">Detailed description of how funds will be used</p>
+                <div className="p-3 bg-slate-50 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Intended Use Description</Label>
+                      <p className="text-xs text-slate-500">Detailed description of how funds will be used</p>
+                    </div>
+                    <Switch
+                      checked={formData.application_fields?.intended_use_description?.enabled ?? true}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        application_fields: { 
+                          ...formData.application_fields, 
+                          intended_use_description: { ...(formData.application_fields?.intended_use_description || {}), enabled: checked }
+                        }
+                      })}
+                    />
                   </div>
-                  <Switch
-                    checked={formData.application_fields?.intended_use_description ?? true}
-                    onCheckedChange={(checked) => setFormData({ 
-                      ...formData, 
-                      application_fields: { ...formData.application_fields, intended_use_description: checked }
-                    })}
-                  />
+                  {(formData.application_fields?.intended_use_description?.enabled ?? true) && (
+                    <div className="flex items-center justify-between pl-4 pt-2 border-t">
+                      <Label className="text-xs text-slate-600">Required</Label>
+                      <Switch
+                        checked={formData.application_fields?.intended_use_description?.required ?? true}
+                        onCheckedChange={(checked) => setFormData({ 
+                          ...formData, 
+                          application_fields: { 
+                            ...formData.application_fields, 
+                            intended_use_description: { ...(formData.application_fields?.intended_use_description || {}), required: checked }
+                          }
+                        })}
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div>
-                    <Label className="text-sm">Justification Paragraph</Label>
-                    <p className="text-xs text-slate-500">Why the student needs this funding</p>
+                <div className="p-3 bg-slate-50 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Justification Paragraph</Label>
+                      <p className="text-xs text-slate-500">Why the student needs this funding</p>
+                    </div>
+                    <Switch
+                      checked={formData.application_fields?.justification_paragraph?.enabled ?? true}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        application_fields: { 
+                          ...formData.application_fields, 
+                          justification_paragraph: { ...(formData.application_fields?.justification_paragraph || {}), enabled: checked }
+                        }
+                      })}
+                    />
                   </div>
-                  <Switch
-                    checked={formData.application_fields?.justification_paragraph ?? true}
-                    onCheckedChange={(checked) => setFormData({ 
-                      ...formData, 
-                      application_fields: { ...formData.application_fields, justification_paragraph: checked }
-                    })}
-                  />
+                  {(formData.application_fields?.justification_paragraph?.enabled ?? true) && (
+                    <div className="flex items-center justify-between pl-4 pt-2 border-t">
+                      <Label className="text-xs text-slate-600">Required</Label>
+                      <Switch
+                        checked={formData.application_fields?.justification_paragraph?.required ?? true}
+                        onCheckedChange={(checked) => setFormData({ 
+                          ...formData, 
+                          application_fields: { 
+                            ...formData.application_fields, 
+                            justification_paragraph: { ...(formData.application_fields?.justification_paragraph || {}), required: checked }
+                          }
+                        })}
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                  <div>
-                    <Label className="text-sm">Attachments</Label>
-                    <p className="text-xs text-slate-500">Allow students to upload supporting documents</p>
+                <div className="p-3 bg-slate-50 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Attachments</Label>
+                      <p className="text-xs text-slate-500">Allow students to upload supporting documents</p>
+                    </div>
+                    <Switch
+                      checked={formData.application_fields?.attachments?.enabled ?? true}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        application_fields: { 
+                          ...formData.application_fields, 
+                          attachments: { ...(formData.application_fields?.attachments || {}), enabled: checked }
+                        }
+                      })}
+                    />
                   </div>
-                  <Switch
-                    checked={formData.application_fields?.attachments ?? true}
-                    onCheckedChange={(checked) => setFormData({ 
-                      ...formData, 
-                      application_fields: { ...formData.application_fields, attachments: checked }
-                    })}
-                  />
+                  {(formData.application_fields?.attachments?.enabled ?? true) && (
+                    <div className="flex items-center justify-between pl-4 pt-2 border-t">
+                      <Label className="text-xs text-slate-600">Required</Label>
+                      <Switch
+                        checked={formData.application_fields?.attachments?.required ?? false}
+                        onCheckedChange={(checked) => setFormData({ 
+                          ...formData, 
+                          application_fields: { 
+                            ...formData.application_fields, 
+                            attachments: { ...(formData.application_fields?.attachments || {}), required: checked }
+                          }
+                        })}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -595,10 +675,10 @@ export default function FundDetail() {
                     budget_enforcement: fund.budget_enforcement || "warn",
                     status: fund.status,
                     application_fields: fund.application_fields || {
-                      phone: true,
-                      intended_use_description: true,
-                      justification_paragraph: true,
-                      attachments: true
+                      phone: { enabled: true, required: false },
+                      intended_use_description: { enabled: true, required: true },
+                      justification_paragraph: { enabled: true, required: true },
+                      attachments: { enabled: true, required: false }
                     }
                   });
                 }}
