@@ -66,7 +66,14 @@ export default function FundDetail() {
   const fundId = urlParams.get("id");
   const editMode = urlParams.get("edit") === "true";
   const [isEditing, setIsEditing] = useState(editMode);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    application_fields: {
+      phone: true,
+      intended_use_description: true,
+      justification_paragraph: true,
+      attachments: true
+    }
+  });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -109,7 +116,13 @@ export default function FundDetail() {
         requires_attachments: fund.requires_attachments || false,
         allowed_categories: fund.allowed_categories || [],
         budget_enforcement: fund.budget_enforcement || "warn",
-        status: fund.status
+        status: fund.status,
+        application_fields: fund.application_fields || {
+          phone: true,
+          intended_use_description: true,
+          justification_paragraph: true,
+          attachments: true
+        }
       });
     }
   }, [fund]);
@@ -139,7 +152,8 @@ export default function FundDetail() {
       requires_attachments: formData.requires_attachments,
       allowed_categories: formData.allowed_categories,
       budget_enforcement: formData.budget_enforcement,
-      status: formData.status
+      status: formData.status,
+      application_fields: formData.application_fields
     };
 
     await base44.entities.Fund.update(fundId, updateData);
@@ -498,6 +512,70 @@ export default function FundDetail() {
               </div>
             </div>
 
+            {/* Application Form Fields */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-slate-800">Application Form Fields</h3>
+              <p className="text-sm text-slate-500">Choose which fields appear in the student application form</p>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div>
+                    <Label className="text-sm">Phone Number</Label>
+                    <p className="text-xs text-slate-500">Collect student phone number</p>
+                  </div>
+                  <Switch
+                    checked={formData.application_fields?.phone ?? true}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      application_fields: { ...formData.application_fields, phone: checked }
+                    })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div>
+                    <Label className="text-sm">Intended Use Description</Label>
+                    <p className="text-xs text-slate-500">Detailed description of how funds will be used</p>
+                  </div>
+                  <Switch
+                    checked={formData.application_fields?.intended_use_description ?? true}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      application_fields: { ...formData.application_fields, intended_use_description: checked }
+                    })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div>
+                    <Label className="text-sm">Justification Paragraph</Label>
+                    <p className="text-xs text-slate-500">Why the student needs this funding</p>
+                  </div>
+                  <Switch
+                    checked={formData.application_fields?.justification_paragraph ?? true}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      application_fields: { ...formData.application_fields, justification_paragraph: checked }
+                    })}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div>
+                    <Label className="text-sm">Attachments</Label>
+                    <p className="text-xs text-slate-500">Allow students to upload supporting documents</p>
+                  </div>
+                  <Switch
+                    checked={formData.application_fields?.attachments ?? true}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      application_fields: { ...formData.application_fields, attachments: checked }
+                    })}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
@@ -515,7 +593,13 @@ export default function FundDetail() {
                     requires_attachments: fund.requires_attachments || false,
                     allowed_categories: fund.allowed_categories || [],
                     budget_enforcement: fund.budget_enforcement || "warn",
-                    status: fund.status
+                    status: fund.status,
+                    application_fields: fund.application_fields || {
+                      phone: true,
+                      intended_use_description: true,
+                      justification_paragraph: true,
+                      attachments: true
+                    }
                   });
                 }}
               >
