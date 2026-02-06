@@ -248,10 +248,19 @@ export default function Apply() {
       "student_full_name",
       "student_email",
       "requested_amount",
-      "intended_use_category",
-      "intended_use_description",
-      "justification_paragraph"
+      "intended_use_category"
     ];
+
+    // Add conditional fields based on fund configuration
+    if (selectedFund.application_fields?.phone?.enabled) {
+      fields.push("student_phone");
+    }
+    if (selectedFund.application_fields?.intended_use_description?.enabled) {
+      fields.push("intended_use_description");
+    }
+    if (selectedFund.application_fields?.justification_paragraph?.enabled) {
+      fields.push("justification_paragraph");
+    }
 
     fields.forEach(field => validateField(field, formData[field]));
 
