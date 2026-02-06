@@ -483,14 +483,6 @@ export default function Apply() {
                       )}
                       
                       <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-slate-400" />
-                          <div>
-                            <p className="text-slate-500 text-xs">Total Budget</p>
-                            <p className="font-semibold">${fund.total_budget?.toLocaleString()}</p>
-                          </div>
-                        </div>
-                        
                         {fund.max_request_amount && (
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="w-4 h-4 text-amber-500" />
@@ -565,24 +557,25 @@ export default function Apply() {
       />
 
       {/* Fund Info Banner */}
-      <Alert className="mb-6 bg-indigo-50 border-indigo-200">
-        <Wallet className="w-4 h-4 text-indigo-600" />
-        <AlertDescription className="text-indigo-900">
-          <div className="flex items-center justify-between">
-            <span>
-              <strong>Budget:</strong> ${selectedFund.total_budget?.toLocaleString()}
+      {(selectedFund.max_request_amount || selectedFund.end_date) && (
+        <Alert className="mb-6 bg-indigo-50 border-indigo-200">
+          <Wallet className="w-4 h-4 text-indigo-600" />
+          <AlertDescription className="text-indigo-900">
+            <div className="flex items-center justify-between">
               {selectedFund.max_request_amount && (
-                <> • <strong>Max Request:</strong> ${selectedFund.max_request_amount?.toLocaleString()}</>
+                <span>
+                  <strong>Max Request:</strong> ${selectedFund.max_request_amount?.toLocaleString()}
+                </span>
               )}
-            </span>
-            {selectedFund.end_date && (
-              <span className="text-sm">
-                <strong>Deadline:</strong> {format(new Date(selectedFund.end_date), "MMM d, yyyy")}
-              </span>
-            )}
-          </div>
-        </AlertDescription>
-      </Alert>
+              {selectedFund.end_date && (
+                <span className="text-sm">
+                  <strong>Deadline:</strong> {format(new Date(selectedFund.end_date), "MMM d, yyyy")}
+                </span>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
         <CardHeader>
