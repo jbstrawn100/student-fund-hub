@@ -390,6 +390,9 @@ export default function ReviewRequest() {
   
   const canDisburse = request.status === "Approved" && ["fund_manager", "admin"].includes(user.app_role);
 
+  // Check if user can see PII (only fund managers and admins)
+  const canSeePII = ["fund_manager", "admin"].includes(user.app_role);
+
   // Get internal comments (reviews with comments)
   const internalComments = reviews.filter(r => r.comments && r.comments.trim());
 
@@ -413,10 +416,12 @@ export default function ReviewRequest() {
         <div className="p-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-2 text-indigo-100 text-sm mb-1">
-                <User className="w-4 h-4" />
-                {request.student_full_name}
-              </div>
+              {canSeePII && (
+                <div className="flex items-center gap-2 text-indigo-100 text-sm mb-1">
+                  <User className="w-4 h-4" />
+                  {request.student_full_name}
+                </div>
+              )}
               <h1 className="text-2xl font-bold">{request.fund_name}</h1>
               <p className="text-indigo-100 mt-1">{request.intended_use_category}</p>
             </div>
@@ -435,27 +440,29 @@ export default function ReviewRequest() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Student Info */}
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
-            <CardHeader>
-              <CardTitle className="text-lg">Student Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Full Name</p>
-                  <p className="font-medium">{request.student_full_name}</p>
+          {canSeePII && (
+            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+              <CardHeader>
+                <CardTitle className="text-lg">Student Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-sm text-slate-500">Full Name</p>
+                    <p className="font-medium">{request.student_full_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Email</p>
+                    <p className="font-medium">{request.student_email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Phone</p>
+                    <p className="font-medium">{request.student_phone || "Not provided"}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-slate-500">Email</p>
-                  <p className="font-medium">{request.student_email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Phone</p>
-                  <p className="font-medium">{request.student_phone || "Not provided"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Request Details */}
           <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
