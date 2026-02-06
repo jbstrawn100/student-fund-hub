@@ -529,8 +529,8 @@ export default function Apply() {
     parseFloat(formData.requested_amount) > 0 &&
     formData.intended_use_category &&
     isCategoryAllowed &&
-    formData.intended_use_description?.length >= 30 &&
-    formData.justification_paragraph?.length >= 100 &&
+    (!(selectedFund.application_fields?.intended_use_description ?? true) || formData.intended_use_description?.length >= 30) &&
+    (!(selectedFund.application_fields?.justification_paragraph ?? true) || formData.justification_paragraph?.length >= 100) &&
     (!selectedFund?.requires_attachments || formData.attachments.length > 0) &&
     Object.keys(errors).length === 0;
 
@@ -615,16 +615,18 @@ export default function Apply() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.student_phone}
-                  onChange={(e) => handleInputChange("student_phone", e.target.value)}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
+              {(selectedFund.application_fields?.phone ?? true) && (
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.student_phone}
+                    onChange={(e) => handleInputChange("student_phone", e.target.value)}
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
@@ -694,53 +696,58 @@ export default function Apply() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="useDescription">
-                How will you use these funds? * (minimum 30 characters)
-                {errors.intended_use_description && (
-                  <span className="text-red-600 text-xs ml-2">{errors.intended_use_description}</span>
-                )}
-              </Label>
-              <Textarea
-                id="useDescription"
-                placeholder="Provide a detailed description of how you plan to use these funds..."
-                rows={4}
-                value={formData.intended_use_description}
-                onChange={(e) => handleInputChange("intended_use_description", e.target.value)}
-                className={errors.intended_use_description ? "border-red-500" : ""}
-              />
-              <p className="text-xs text-slate-500">
-                {formData.intended_use_description.length} / 30 characters minimum
-              </p>
-            </div>
+            {(selectedFund.application_fields?.intended_use_description ?? true) && (
+              <div className="space-y-2">
+                <Label htmlFor="useDescription">
+                  How will you use these funds? * (minimum 30 characters)
+                  {errors.intended_use_description && (
+                    <span className="text-red-600 text-xs ml-2">{errors.intended_use_description}</span>
+                  )}
+                </Label>
+                <Textarea
+                  id="useDescription"
+                  placeholder="Provide a detailed description of how you plan to use these funds..."
+                  rows={4}
+                  value={formData.intended_use_description}
+                  onChange={(e) => handleInputChange("intended_use_description", e.target.value)}
+                  className={errors.intended_use_description ? "border-red-500" : ""}
+                />
+                <p className="text-xs text-slate-500">
+                  {formData.intended_use_description.length} / 30 characters minimum
+                </p>
+              </div>
+            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="justification">
-                Why do you deserve these funds? * (minimum 100 characters)
-                {errors.justification_paragraph && (
-                  <span className="text-red-600 text-xs ml-2">{errors.justification_paragraph}</span>
-                )}
-              </Label>
-              <Textarea
-                id="justification"
-                placeholder="Explain your situation, why you need this assistance, and how it will help you succeed..."
-                rows={6}
-                value={formData.justification_paragraph}
-                onChange={(e) => handleInputChange("justification_paragraph", e.target.value)}
-                className={errors.justification_paragraph ? "border-red-500" : ""}
-              />
-              <p className="text-xs text-slate-500">
-                {formData.justification_paragraph.length} / 100 characters minimum
-              </p>
-            </div>
+            {(selectedFund.application_fields?.justification_paragraph ?? true) && (
+              <div className="space-y-2">
+                <Label htmlFor="justification">
+                  Why do you deserve these funds? * (minimum 100 characters)
+                  {errors.justification_paragraph && (
+                    <span className="text-red-600 text-xs ml-2">{errors.justification_paragraph}</span>
+                  )}
+                </Label>
+                <Textarea
+                  id="justification"
+                  placeholder="Explain your situation, why you need this assistance, and how it will help you succeed..."
+                  rows={6}
+                  value={formData.justification_paragraph}
+                  onChange={(e) => handleInputChange("justification_paragraph", e.target.value)}
+                  className={errors.justification_paragraph ? "border-red-500" : ""}
+                />
+                <p className="text-xs text-slate-500">
+                  {formData.justification_paragraph.length} / 100 characters minimum
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Attachments */}
-          <div className="space-y-4 pt-4 border-t">
-            <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-              <Paperclip className="w-4 h-4" />
-              Supporting Documents {selectedFund?.requires_attachments && <span className="text-red-600">*</span>}
-            </h3>
+          {(selectedFund.application_fields?.attachments ?? true) && (
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                <Paperclip className="w-4 h-4" />
+                Supporting Documents {selectedFund?.requires_attachments && <span className="text-red-600">*</span>}
+              </h3>
             <p className="text-sm text-slate-500">
               Upload any supporting documents (PDF, JPG, PNG, DOC - max 10MB per file)
               {selectedFund?.requires_attachments && (
@@ -799,7 +806,8 @@ export default function Apply() {
                 ))}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-between gap-3 pt-6 border-t">
