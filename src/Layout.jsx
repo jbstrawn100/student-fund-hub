@@ -64,11 +64,16 @@ export default function Layout({ children, currentPageName }) {
   const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
   const isAdmin = userRole === "admin";
   const isFundManager = userRole === "fund_manager" || isAdmin;
+  const isAdvocate = userRole === "advocate";
 
   const studentNavItems = [
     { name: "Dashboard", icon: Home, page: "Home" },
     { name: "Apply for Fund", icon: PlusCircle, page: "Apply" },
     { name: "My Requests", icon: FileText, page: "MyRequests" },
+  ];
+
+  const advocateNavItems = [
+    { name: "My Assigned Applications", icon: FileText, page: "AdvocateQueue" },
   ];
 
   const staffNavItems = [
@@ -84,7 +89,7 @@ export default function Layout({ children, currentPageName }) {
     ] : []),
   ];
 
-  const navItems = isStaff ? staffNavItems : studentNavItems;
+  const navItems = isStaff ? staffNavItems : (isAdvocate ? advocateNavItems : studentNavItems);
 
   // PublicHome and SuperAdminDashboard don't need layout
   if (currentPageName === "PublicHome" || currentPageName === "SuperAdminDashboard") {
@@ -102,7 +107,7 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // Student layout - top navigation only
+  // Student and Advocate layout - top navigation only
   if (!isStaff) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
@@ -111,7 +116,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
-              <Link to={createPageUrl("Apply")} className="flex items-center gap-3">
+              <Link to={createPageUrl(isAdvocate ? "AdvocateQueue" : "Apply")} className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
                   <GraduationCap className="w-5 h-5 text-white" />
                 </div>
@@ -120,32 +125,50 @@ export default function Layout({ children, currentPageName }) {
 
               {/* Main Navigation */}
               <nav className="hidden md:flex items-center gap-1">
-                <Link to={createPageUrl("Apply")}>
-                  <Button
-                    variant="ghost"
-                    className={`${
-                      currentPageName === "Apply"
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    <PlusCircle className="w-4 h-4 mr-2" />
-                    Apply
-                  </Button>
-                </Link>
-                <Link to={createPageUrl("MyRequests")}>
-                  <Button
-                    variant="ghost"
-                    className={`${
-                      currentPageName === "MyRequests" || currentPageName === "RequestDetail"
-                        ? "bg-indigo-50 text-indigo-700"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    My Requests
-                  </Button>
-                </Link>
+                {isAdvocate ? (
+                  <Link to={createPageUrl("AdvocateQueue")}>
+                    <Button
+                      variant="ghost"
+                      className={`${
+                        currentPageName === "AdvocateQueue" || currentPageName === "AdvocateRequestDetail"
+                          ? "bg-indigo-50 text-indigo-700"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      My Assigned Applications
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link to={createPageUrl("Apply")}>
+                      <Button
+                        variant="ghost"
+                        className={`${
+                          currentPageName === "Apply"
+                            ? "bg-indigo-50 text-indigo-700"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                        Apply
+                      </Button>
+                    </Link>
+                    <Link to={createPageUrl("MyRequests")}>
+                      <Button
+                        variant="ghost"
+                        className={`${
+                          currentPageName === "MyRequests" || currentPageName === "RequestDetail"
+                            ? "bg-indigo-50 text-indigo-700"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        My Requests
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </nav>
 
               {/* Right Side - Notifications + Profile */}
@@ -167,18 +190,29 @@ export default function Layout({ children, currentPageName }) {
                       <p className="text-xs text-slate-500">{user?.email}</p>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild className="md:hidden">
-                      <Link to={createPageUrl("Apply")} className="cursor-pointer">
-                        <PlusCircle className="w-4 h-4 mr-2" />
-                        Apply
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="md:hidden">
-                      <Link to={createPageUrl("MyRequests")} className="cursor-pointer">
-                        <FileText className="w-4 h-4 mr-2" />
-                        My Requests
-                      </Link>
-                    </DropdownMenuItem>
+                    {isAdvocate ? (
+                      <DropdownMenuItem asChild className="md:hidden">
+                        <Link to={createPageUrl("AdvocateQueue")} className="cursor-pointer">
+                          <FileText className="w-4 h-4 mr-2" />
+                          My Assigned Applications
+                        </Link>
+                      </DropdownMenuItem>
+                    ) : (
+                      <>
+                        <DropdownMenuItem asChild className="md:hidden">
+                          <Link to={createPageUrl("Apply")} className="cursor-pointer">
+                            <PlusCircle className="w-4 h-4 mr-2" />
+                            Apply
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="md:hidden">
+                          <Link to={createPageUrl("MyRequests")} className="cursor-pointer">
+                            <FileText className="w-4 h-4 mr-2" />
+                            My Requests
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator className="md:hidden" />
                     <DropdownMenuItem asChild>
                       <Link to={createPageUrl("Notifications")} className="cursor-pointer">
