@@ -47,8 +47,6 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import AdvocateQueue from './pages/AdvocateQueue';
-import AdvocateRequestDetail from './pages/AdvocateRequestDetail';
 import Apply from './pages/Apply';
 import AuditLog from './pages/AuditLog';
 import CreateFund from './pages/CreateFund';
@@ -71,8 +69,6 @@ import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "AdvocateQueue": AdvocateQueue,
-    "AdvocateRequestDetail": AdvocateRequestDetail,
     "Apply": Apply,
     "AuditLog": AuditLog,
     "CreateFund": CreateFund,

@@ -64,7 +64,6 @@ export default function Layout({ children, currentPageName }) {
   const isStaff = ["reviewer", "approver", "advisor", "fund_manager", "admin"].includes(userRole);
   const isAdmin = userRole === "admin";
   const isFundManager = userRole === "fund_manager" || isAdmin;
-  const isAdvocate = userRole === "advocate";
   
   // Get dashboard permissions
   const permissions = user?.dashboard_permissions || {};
@@ -73,10 +72,6 @@ export default function Layout({ children, currentPageName }) {
     { name: "Dashboard", icon: Home, page: "Home" },
     { name: "Apply for Fund", icon: PlusCircle, page: "Apply" },
     { name: "My Requests", icon: FileText, page: "MyRequests" },
-  ];
-
-  const advocateNavItems = [
-    { name: "My Assigned Applications", icon: FileText, page: "AdvocateQueue" },
   ];
 
   const staffNavItems = [
@@ -90,7 +85,7 @@ export default function Layout({ children, currentPageName }) {
     ...((isAdmin || permissions.access_settings) ? [{ name: "Settings", icon: Settings, page: "Settings" }] : []),
   ];
 
-  const navItems = isStaff ? staffNavItems : (isAdvocate ? advocateNavItems : studentNavItems);
+  const navItems = isStaff ? staffNavItems : studentNavItems;
 
   // PublicHome and SuperAdminDashboard don't need layout
   if (currentPageName === "PublicHome" || currentPageName === "SuperAdminDashboard") {
@@ -126,50 +121,32 @@ export default function Layout({ children, currentPageName }) {
 
               {/* Main Navigation */}
               <nav className="hidden md:flex items-center gap-1">
-                {isAdvocate ? (
-                  <Link to={createPageUrl("AdvocateQueue")}>
-                    <Button
-                      variant="ghost"
-                      className={`${
-                        currentPageName === "AdvocateQueue" || currentPageName === "AdvocateRequestDetail"
-                          ? "bg-indigo-50 text-indigo-700"
-                          : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      My Assigned Applications
-                    </Button>
-                  </Link>
-                ) : (
-                  <>
-                    <Link to={createPageUrl("Apply")}>
-                      <Button
-                        variant="ghost"
-                        className={`${
-                          currentPageName === "Apply"
-                            ? "bg-indigo-50 text-indigo-700"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        <PlusCircle className="w-4 h-4 mr-2" />
-                        Apply
-                      </Button>
-                    </Link>
-                    <Link to={createPageUrl("MyRequests")}>
-                      <Button
-                        variant="ghost"
-                        className={`${
-                          currentPageName === "MyRequests" || currentPageName === "RequestDetail"
-                            ? "bg-indigo-50 text-indigo-700"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        My Requests
-                      </Button>
-                    </Link>
-                  </>
-                )}
+                <Link to={createPageUrl("Apply")}>
+                  <Button
+                    variant="ghost"
+                    className={`${
+                      currentPageName === "Apply"
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <PlusCircle className="w-4 h-4 mr-2" />
+                    Apply
+                  </Button>
+                </Link>
+                <Link to={createPageUrl("MyRequests")}>
+                  <Button
+                    variant="ghost"
+                    className={`${
+                      currentPageName === "MyRequests" || currentPageName === "RequestDetail"
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    My Requests
+                  </Button>
+                </Link>
               </nav>
 
               {/* Right Side - Notifications + Profile */}
@@ -191,29 +168,18 @@ export default function Layout({ children, currentPageName }) {
                       <p className="text-xs text-slate-500">{user?.email}</p>
                     </div>
                     <DropdownMenuSeparator />
-                    {isAdvocate ? (
-                      <DropdownMenuItem asChild className="md:hidden">
-                        <Link to={createPageUrl("AdvocateQueue")} className="cursor-pointer">
-                          <FileText className="w-4 h-4 mr-2" />
-                          My Assigned Applications
-                        </Link>
-                      </DropdownMenuItem>
-                    ) : (
-                      <>
-                        <DropdownMenuItem asChild className="md:hidden">
-                          <Link to={createPageUrl("Apply")} className="cursor-pointer">
-                            <PlusCircle className="w-4 h-4 mr-2" />
-                            Apply
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild className="md:hidden">
-                          <Link to={createPageUrl("MyRequests")} className="cursor-pointer">
-                            <FileText className="w-4 h-4 mr-2" />
-                            My Requests
-                          </Link>
-                        </DropdownMenuItem>
-                      </>
-                    )}
+                    <DropdownMenuItem asChild className="md:hidden">
+                      <Link to={createPageUrl("Apply")} className="cursor-pointer">
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                        Apply
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild className="md:hidden">
+                      <Link to={createPageUrl("MyRequests")} className="cursor-pointer">
+                        <FileText className="w-4 h-4 mr-2" />
+                        My Requests
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator className="md:hidden" />
                     <DropdownMenuItem asChild>
                       <Link to={createPageUrl("Notifications")} className="cursor-pointer">
