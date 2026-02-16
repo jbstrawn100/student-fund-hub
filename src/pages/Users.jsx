@@ -25,6 +25,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -50,14 +52,17 @@ import {
   Phone,
   Shield,
   GraduationCap,
-  UserCheck
+  UserCheck,
+  Settings as SettingsIcon
 } from "lucide-react";
 import { format } from "date-fns";
 
 const roleColors = {
   student: "bg-blue-100 text-blue-800 border-blue-200",
   reviewer: "bg-amber-100 text-amber-800 border-amber-200",
+  advisor: "bg-indigo-100 text-indigo-800 border-indigo-200",
   approver: "bg-purple-100 text-purple-800 border-purple-200",
+  advocate: "bg-teal-100 text-teal-800 border-teal-200",
   fund_manager: "bg-emerald-100 text-emerald-800 border-emerald-200",
   admin: "bg-rose-100 text-rose-800 border-rose-200"
 };
@@ -65,7 +70,9 @@ const roleColors = {
 const roleIcons = {
   student: GraduationCap,
   reviewer: UserCheck,
+  advisor: Shield,
   approver: Shield,
+  advocate: UserCheck,
   fund_manager: UsersIcon,
   admin: Shield
 };
@@ -108,7 +115,9 @@ export default function Users() {
     all: users.length,
     student: users.filter(u => u.app_role === "student" || !u.app_role).length,
     reviewer: users.filter(u => u.app_role === "reviewer").length,
+    advisor: users.filter(u => u.app_role === "advisor").length,
     approver: users.filter(u => u.app_role === "approver").length,
+    advocate: users.filter(u => u.app_role === "advocate").length,
     fund_manager: users.filter(u => u.app_role === "fund_manager").length,
     admin: users.filter(u => u.app_role === "admin").length,
   };
@@ -132,18 +141,30 @@ export default function Users() {
     setShowEditModal(true);
   };
 
-  const handleUpdateUser = async (newRole, newStatus) => {
+  const handleUpdateUser = async (newRole, newStatus, permissions) => {
     setSubmitting(true);
     
     await base44.entities.User.update(editingUser.id, {
       app_role: newRole,
-      status: newStatus
+      status: newStatus,
+      dashboard_permissions: permissions
     });
 
     queryClient.invalidateQueries(["allUsers"]);
     setShowEditModal(false);
     setEditingUser(null);
     setSubmitting(false);
+  };
+
+  const togglePermission = (key) => {
+    const currentPermissions = editingUser.dashboard_permissions || {};
+    setEditingUser({
+      ...editingUser,
+      dashboard_permissions: {
+        ...currentPermissions,
+        [key]: !currentPermissions[key]
+      }
+    });
   };
 
   if (!currentUser) {
@@ -192,7 +213,9 @@ export default function Users() {
                 <SelectItem value="all">All Roles ({roleCounts.all})</SelectItem>
                 <SelectItem value="student">Students ({roleCounts.student})</SelectItem>
                 <SelectItem value="reviewer">Reviewers ({roleCounts.reviewer})</SelectItem>
+                <SelectItem value="advisor">Advisors ({roleCounts.advisor})</SelectItem>
                 <SelectItem value="approver">Approvers ({roleCounts.approver})</SelectItem>
+                <SelectItem value="advocate">Advocates ({roleCounts.advocate})</SelectItem>
                 <SelectItem value="fund_manager">Fund Managers ({roleCounts.fund_manager})</SelectItem>
                 <SelectItem value="admin">Admins ({roleCounts.admin})</SelectItem>
               </SelectContent>
@@ -346,7 +369,9 @@ export default function Users() {
                 <SelectContent>
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="reviewer">Reviewer</SelectItem>
+                  <SelectItem value="advisor">Advisor</SelectItem>
                   <SelectItem value="approver">Approver</SelectItem>
+                  <SelectItem value="advocate">Advocate</SelectItem>
                   <SelectItem value="fund_manager">Fund Manager</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
@@ -374,61 +399,192 @@ export default function Users() {
 
       {/* Edit User Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              Update user role and status.
+              Update user role, status, and permissions.
             </DialogDescription>
           </DialogHeader>
           {editingUser && (
-            <div className="space-y-4 py-4">
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="font-medium">{editingUser.full_name}</p>
-                <p className="text-sm text-slate-500">{editingUser.email}</p>
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select
-                  value={editingUser.app_role || "student"}
-                  onValueChange={(value) => setEditingUser({ ...editingUser, app_role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="reviewer">Reviewer</SelectItem>
-                    <SelectItem value="approver">Approver</SelectItem>
-                    <SelectItem value="fund_manager">Fund Manager</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={editingUser.status || "active"}
-                  onValueChange={(value) => setEditingUser({ ...editingUser, status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <Tabs defaultValue="basic" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                <TabsTrigger value="permissions">
+                  <SettingsIcon className="w-4 h-4 mr-2" />
+                  Permissions
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="basic" className="space-y-4 pt-4">
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <p className="font-medium">{editingUser.full_name}</p>
+                  <p className="text-sm text-slate-500">{editingUser.email}</p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Select
+                    value={editingUser.app_role || "student"}
+                    onValueChange={(value) => setEditingUser({ ...editingUser, app_role: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="reviewer">Reviewer</SelectItem>
+                      <SelectItem value="advisor">Advisor</SelectItem>
+                      <SelectItem value="approver">Approver</SelectItem>
+                      <SelectItem value="advocate">Advocate</SelectItem>
+                      <SelectItem value="fund_manager">Fund Manager</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={editingUser.status || "active"}
+                    onValueChange={(value) => setEditingUser({ ...editingUser, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="permissions" className="space-y-4 pt-4">
+                <div className="space-y-1 mb-4">
+                  <p className="text-sm font-medium">Dashboard Permissions</p>
+                  <p className="text-xs text-slate-500">Control what sections this user can access in the dashboard</p>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">View Statistics</p>
+                      <p className="text-xs text-slate-500">Access to stats cards on dashboard</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.view_stats !== false}
+                      onCheckedChange={() => togglePermission('view_stats')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">View Pending Requests</p>
+                      <p className="text-xs text-slate-500">See pending requests section</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.view_pending_requests !== false}
+                      onCheckedChange={() => togglePermission('view_pending_requests')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">View Fund Overview</p>
+                      <p className="text-xs text-slate-500">See fund overview section</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.view_fund_overview !== false}
+                      onCheckedChange={() => togglePermission('view_fund_overview')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">Access Review Queue</p>
+                      <p className="text-xs text-slate-500">Navigate to review queue page</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.access_queue !== false}
+                      onCheckedChange={() => togglePermission('access_queue')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">Access Funds Management</p>
+                      <p className="text-xs text-slate-500">View and manage funds</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.access_funds !== false}
+                      onCheckedChange={() => togglePermission('access_funds')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">Access Reports</p>
+                      <p className="text-xs text-slate-500">View reporting dashboard</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.access_reports !== false}
+                      onCheckedChange={() => togglePermission('access_reports')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">Access Routing Rules</p>
+                      <p className="text-xs text-slate-500">Configure fund routing</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.access_rules === true}
+                      onCheckedChange={() => togglePermission('access_rules')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">Access User Management</p>
+                      <p className="text-xs text-slate-500">Manage users and roles</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.access_users === true}
+                      onCheckedChange={() => togglePermission('access_users')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium text-sm">Access Audit Log</p>
+                      <p className="text-xs text-slate-500">View system audit trail</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.access_audit_log === true}
+                      onCheckedChange={() => togglePermission('access_audit_log')}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <p className="font-medium text-sm">Access Settings</p>
+                      <p className="text-xs text-slate-500">Modify system settings</p>
+                    </div>
+                    <Switch
+                      checked={editingUser.dashboard_permissions?.access_settings === true}
+                      onCheckedChange={() => togglePermission('access_settings')}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowEditModal(false)}>
               Cancel
             </Button>
             <Button
-              onClick={() => handleUpdateUser(editingUser.app_role, editingUser.status)}
+              onClick={() => handleUpdateUser(editingUser.app_role, editingUser.status, editingUser.dashboard_permissions)}
               disabled={submitting}
               className="bg-indigo-600 hover:bg-indigo-700"
             >
