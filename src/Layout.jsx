@@ -61,10 +61,13 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const userRole = user?.app_role || "student";
-  const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
+  const isStaff = ["reviewer", "approver", "advisor", "fund_manager", "admin"].includes(userRole);
   const isAdmin = userRole === "admin";
   const isFundManager = userRole === "fund_manager" || isAdmin;
   const isAdvocate = userRole === "advocate";
+  
+  // Get dashboard permissions
+  const permissions = user?.dashboard_permissions || {};
 
   const studentNavItems = [
     { name: "Dashboard", icon: Home, page: "Home" },
@@ -78,15 +81,13 @@ export default function Layout({ children, currentPageName }) {
 
   const staffNavItems = [
     { name: "Dashboard", icon: Home, page: "Home" },
-    { name: "Review Queue", icon: ClipboardList, page: "Queue" },
-    { name: "Funds", icon: Wallet, page: "Funds" },
-    { name: "Reports", icon: BarChart3, page: "Reports" },
-    ...(isFundManager ? [{ name: "Routing Rules", icon: Settings, page: "Rules" }] : []),
-    ...(isAdmin ? [
-      { name: "Users", icon: Users, page: "Users" },
-      { name: "Audit Log", icon: FileSearch, page: "AuditLog" },
-      { name: "Settings", icon: Settings, page: "Settings" }
-    ] : []),
+    ...(permissions.access_queue !== false ? [{ name: "Review Queue", icon: ClipboardList, page: "Queue" }] : []),
+    ...(permissions.access_funds !== false ? [{ name: "Funds", icon: Wallet, page: "Funds" }] : []),
+    ...(permissions.access_reports !== false ? [{ name: "Reports", icon: BarChart3, page: "Reports" }] : []),
+    ...((isFundManager || permissions.access_rules) ? [{ name: "Routing Rules", icon: Settings, page: "Rules" }] : []),
+    ...((isAdmin || permissions.access_users) ? [{ name: "Users", icon: Users, page: "Users" }] : []),
+    ...((isAdmin || permissions.access_audit_log) ? [{ name: "Audit Log", icon: FileSearch, page: "AuditLog" }] : []),
+    ...((isAdmin || permissions.access_settings) ? [{ name: "Settings", icon: Settings, page: "Settings" }] : []),
   ];
 
   const navItems = isStaff ? staffNavItems : (isAdvocate ? advocateNavItems : studentNavItems);

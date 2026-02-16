@@ -35,14 +35,14 @@ export default function Home() {
     
     // Redirect students to Apply page
     const userRole = currentUser?.app_role || "student";
-    const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
+    const isStaff = ["reviewer", "approver", "advisor", "fund_manager", "admin"].includes(userRole);
     if (!isStaff) {
       navigate(createPageUrl("Apply"));
     }
   };
 
   const userRole = user?.app_role || "student";
-  const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
+  const isStaff = ["reviewer", "approver", "advisor", "fund_manager", "admin"].includes(userRole);
 
   if (!user) {
     return (
@@ -58,22 +58,24 @@ export default function Home() {
 
 
 function StaffDashboard({ user }) {
+  const permissions = user?.dashboard_permissions || {};
+  
   const { data: allRequests = [], isLoading } = useQuery({
     queryKey: ["allRequests", user?.organization_id],
     queryFn: () => base44.entities.FundRequest.filter({ organization_id: user.organization_id }, "-created_date"),
-    enabled: !!user?.organization_id,
+    enabled: !!user?.organization_id && permissions.view_pending_requests !== false,
   });
 
   const { data: funds = [] } = useQuery({
     queryKey: ["allFunds", user?.organization_id],
     queryFn: () => base44.entities.Fund.filter({ organization_id: user.organization_id }),
-    enabled: !!user?.organization_id,
+    enabled: !!user?.organization_id && permissions.view_fund_overview !== false,
   });
 
   const { data: disbursements = [] } = useQuery({
     queryKey: ["disbursements", user?.organization_id],
     queryFn: () => base44.entities.Disbursement.filter({ organization_id: user.organization_id }),
-    enabled: !!user?.organization_id,
+    enabled: !!user?.organization_id && permissions.view_stats !== false,
   });
 
   const stats = {
@@ -102,36 +104,39 @@ function StaffDashboard({ user }) {
       />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Pending Review"
-          value={stats.pendingReview}
-          icon={Clock}
-          color="amber"
-        />
-        <StatCard
-          title="Approved"
-          value={stats.approved}
-          icon={CheckCircle}
-          color="emerald"
-        />
-        <StatCard
-          title="Total Disbursed"
-          value={`$${stats.totalDisbursed.toLocaleString()}`}
-          icon={TrendingUp}
-          color="violet"
-        />
-        <StatCard
-          title="Active Funds"
-          value={stats.activeFunds}
-          icon={Wallet}
-          color="blue"
-        />
-      </div>
+      {permissions.view_stats !== false && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Pending Review"
+            value={stats.pendingReview}
+            icon={Clock}
+            color="amber"
+          />
+          <StatCard
+            title="Approved"
+            value={stats.approved}
+            icon={CheckCircle}
+            color="emerald"
+          />
+          <StatCard
+            title="Total Disbursed"
+            value={`$${stats.totalDisbursed.toLocaleString()}`}
+            icon={TrendingUp}
+            color="violet"
+          />
+          <StatCard
+            title="Active Funds"
+            value={stats.activeFunds}
+            icon={Wallet}
+            color="blue"
+          />
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Pending Requests */}
-        <Card className="lg:col-span-2 bg-white/70 backdrop-blur-sm border-slate-200/50">
+        {permissions.view_pending_requests !== false && (
+          <Card className="lg:col-span-2 bg-white/70 backdrop-blur-sm border-slate-200/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Requests Needing Attention</CardTitle>
             <Button variant="ghost" size="sm" asChild>
@@ -175,9 +180,11 @@ function StaffDashboard({ user }) {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Fund Overview */}
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        {permissions.view_fund_overview !== false && (
+          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Fund Overview</CardTitle>
             <Button variant="ghost" size="sm" asChild>
@@ -228,6 +235,7 @@ function StaffDashboard({ user }) {
             )}
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   );
