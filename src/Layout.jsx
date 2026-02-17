@@ -61,8 +61,8 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const userRole = user?.app_role || "student";
-  const isStaff = ["reviewer", "approver", "advisor", "fund_manager", "admin"].includes(userRole);
-  const isAdvocate = userRole === "advocate";
+  const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
+  const isAdvisor = userRole === "advisor";
   const isAdmin = userRole === "admin";
   const isFundManager = userRole === "fund_manager" || isAdmin;
   
@@ -74,8 +74,8 @@ export default function Layout({ children, currentPageName }) {
     { name: "My Requests", icon: FileText, page: "MyRequests" },
   ];
 
-  const advocateNavItems = [
-    { name: "My Assigned Applications", icon: FileText, page: "AdvocateQueue" },
+  const advisorNavItems = [
+    { name: "My Assigned Applications", icon: FileText, page: "AdvisorQueue" },
   ];
 
   const staffNavItems = [
@@ -89,7 +89,7 @@ export default function Layout({ children, currentPageName }) {
     ...((isAdmin || permissions.access_settings) ? [{ name: "Settings", icon: Settings, page: "Settings" }] : []),
   ];
 
-  const navItems = isStaff ? staffNavItems : (isAdvocate ? advocateNavItems : studentNavItems);
+  const navItems = isStaff ? staffNavItems : (isAdvisor ? advisorNavItems : studentNavItems);
 
   // PublicHome and SuperAdminDashboard don't need layout
   if (currentPageName === "PublicHome" || currentPageName === "SuperAdminDashboard") {
@@ -107,8 +107,8 @@ export default function Layout({ children, currentPageName }) {
     );
   }
 
-  // Student and Advocate layout - top navigation only
-  if (!isStaff && !isAdvocate) {
+  // Student and Advisor layout - top navigation only
+  if (!isStaff && !isAdvisor) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
         {/* Top Navigation */}
@@ -116,7 +116,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
-              <Link to={createPageUrl(isAdvocate ? "AdvocateQueue" : "Apply")} className="flex items-center gap-3">
+              <Link to={createPageUrl(isAdvisor ? "AdvisorQueue" : "Apply")} className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
                   <GraduationCap className="w-5 h-5 text-white" />
                 </div>
@@ -125,12 +125,12 @@ export default function Layout({ children, currentPageName }) {
 
               {/* Main Navigation */}
               <nav className="hidden md:flex items-center gap-1">
-                {isAdvocate ? (
-                  <Link to={createPageUrl("AdvocateQueue")}>
+                {isAdvisor ? (
+                  <Link to={createPageUrl("AdvisorQueue")}>
                     <Button
                       variant="ghost"
                       className={`${
-                        currentPageName === "AdvocateQueue" || currentPageName === "AdvocateRequestDetail"
+                        currentPageName === "AdvisorQueue" || currentPageName === "AdvisorRequestDetail"
                           ? "bg-indigo-50 text-indigo-700"
                           : "text-slate-600 hover:text-slate-900"
                       }`}
@@ -190,9 +190,9 @@ export default function Layout({ children, currentPageName }) {
                       <p className="text-xs text-slate-500">{user?.email}</p>
                     </div>
                     <DropdownMenuSeparator />
-                    {isAdvocate ? (
+                    {isAdvisor ? (
                       <DropdownMenuItem asChild className="md:hidden">
-                        <Link to={createPageUrl("AdvocateQueue")} className="cursor-pointer">
+                        <Link to={createPageUrl("AdvisorQueue")} className="cursor-pointer">
                           <FileText className="w-4 h-4 mr-2" />
                           My Assigned Applications
                         </Link>

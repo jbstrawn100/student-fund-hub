@@ -65,8 +65,8 @@ import Rules from './pages/Rules';
 import Settings from './pages/Settings';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import Users from './pages/Users';
-import AdvocateQueue from './pages/AdvocateQueue';
-import AdvocateRequestDetail from './pages/AdvocateRequestDetail';
+import AdvisorQueue from './pages/AdvisorQueue';
+import AdvisorRequestDetail from './pages/AdvisorRequestDetail';
 import __Layout from './Layout.jsx';
 
 
@@ -89,8 +89,8 @@ export const PAGES = {
     "Settings": Settings,
     "SuperAdminDashboard": SuperAdminDashboard,
     "Users": Users,
-    "AdvocateQueue": AdvocateQueue,
-    "AdvocateRequestDetail": AdvocateRequestDetail,
+    "AdvisorQueue": AdvisorQueue,
+    "AdvisorRequestDetail": AdvisorRequestDetail,
 }
 
 export const pagesConfig = {

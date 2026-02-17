@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-export default function AdvocateQueue() {
+export default function AdvisorQueue() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,7 +43,7 @@ export default function AdvocateQueue() {
   };
 
   const { data: requests = [], isLoading } = useQuery({
-    queryKey: ["advocateRequests", user?.id],
+    queryKey: ["advisorRequests", user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       return base44.entities.FundRequest.filter(
@@ -169,7 +169,7 @@ export default function AdvocateQueue() {
                   </div>
                   <Button
                     className="w-full mt-4"
-                    onClick={() => navigate(createPageUrl(`AdvocateRequestDetail?id=${request.id}`))}
+                    onClick={() => navigate(createPageUrl(`AdvisorRequestDetail?id=${request.id}`))}
                   >
                     View Details
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -233,7 +233,7 @@ export default function AdvocateQueue() {
                       <TableCell>
                         <Button
                           size="sm"
-                          onClick={() => navigate(createPageUrl(`AdvocateRequestDetail?id=${request.id}`))}
+                          onClick={() => navigate(createPageUrl(`AdvisorRequestDetail?id=${request.id}`))}
                         >
                           View
                         </Button>

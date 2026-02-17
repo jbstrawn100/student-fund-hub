@@ -62,7 +62,6 @@ const roleColors = {
   reviewer: "bg-amber-100 text-amber-800 border-amber-200",
   advisor: "bg-indigo-100 text-indigo-800 border-indigo-200",
   approver: "bg-purple-100 text-purple-800 border-purple-200",
-  advocate: "bg-teal-100 text-teal-800 border-teal-200",
   fund_manager: "bg-emerald-100 text-emerald-800 border-emerald-200",
   admin: "bg-rose-100 text-rose-800 border-rose-200"
 };
@@ -72,7 +71,6 @@ const roleIcons = {
   reviewer: UserCheck,
   advisor: Shield,
   approver: Shield,
-  advocate: UserCheck,
   fund_manager: UsersIcon,
   admin: Shield
 };
@@ -117,7 +115,6 @@ export default function Users() {
     reviewer: users.filter(u => u.app_role === "reviewer").length,
     advisor: users.filter(u => u.app_role === "advisor").length,
     approver: users.filter(u => u.app_role === "approver").length,
-    advocate: users.filter(u => u.app_role === "advocate").length,
     fund_manager: users.filter(u => u.app_role === "fund_manager").length,
     admin: users.filter(u => u.app_role === "admin").length,
   };
@@ -215,7 +212,6 @@ export default function Users() {
                 <SelectItem value="reviewer">Reviewers ({roleCounts.reviewer})</SelectItem>
                 <SelectItem value="advisor">Advisors ({roleCounts.advisor})</SelectItem>
                 <SelectItem value="approver">Approvers ({roleCounts.approver})</SelectItem>
-                <SelectItem value="advocate">Advocates ({roleCounts.advocate})</SelectItem>
                 <SelectItem value="fund_manager">Fund Managers ({roleCounts.fund_manager})</SelectItem>
                 <SelectItem value="admin">Admins ({roleCounts.admin})</SelectItem>
               </SelectContent>
@@ -371,7 +367,6 @@ export default function Users() {
                   <SelectItem value="reviewer">Reviewer</SelectItem>
                   <SelectItem value="advisor">Advisor</SelectItem>
                   <SelectItem value="approver">Approver</SelectItem>
-                  <SelectItem value="advocate">Advocate</SelectItem>
                   <SelectItem value="fund_manager">Fund Manager</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
@@ -435,7 +430,6 @@ export default function Users() {
                       <SelectItem value="reviewer">Reviewer</SelectItem>
                       <SelectItem value="advisor">Advisor</SelectItem>
                       <SelectItem value="approver">Approver</SelectItem>
-                      <SelectItem value="advocate">Advocate</SelectItem>
                       <SelectItem value="fund_manager">Fund Manager</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>

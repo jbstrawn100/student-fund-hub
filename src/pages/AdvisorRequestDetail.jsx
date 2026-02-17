@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
-export default function AdvocateRequestDetail() {
+export default function AdvisorRequestDetail() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [user, setUser] = useState(null);
@@ -78,7 +78,7 @@ export default function AdvocateRequestDetail() {
           name: file.name,
           url: file_url,
           type: file.type,
-          uploaded_by: "advocate",
+          uploaded_by: "advisor",
           uploaded_at: new Date().toISOString()
         });
       } catch (error) {
@@ -102,7 +102,7 @@ export default function AdvocateRequestDetail() {
         details: JSON.stringify({
           request_id: request.request_id,
           files_count: uploadedFiles.length,
-          uploaded_by: "advocate"
+          uploaded_by: "advisor"
         })
       });
 
@@ -133,7 +133,7 @@ export default function AdvocateRequestDetail() {
         organization_id: request.organization_id,
         actor_user_id: user.id,
         actor_name: user.full_name,
-        action_type: "ADVOCATE_TASKS_COMPLETED",
+        action_type: "ADVISOR_TASKS_COMPLETED",
         entity_type: "FundRequest",
         entity_id: request.id,
         details: JSON.stringify({
@@ -144,7 +144,7 @@ export default function AdvocateRequestDetail() {
     }
 
     queryClient.invalidateQueries(["fundRequest", requestId]);
-    queryClient.invalidateQueries(["advocateRequests"]);
+    queryClient.invalidateQueries(["advisorRequests"]);
     setShowCompleteModal(false);
     setSubmitting(false);
   };
@@ -166,14 +166,14 @@ export default function AdvocateRequestDetail() {
       entity_id: request.id,
       details: JSON.stringify({
         request_id: request.request_id,
-        closed_by: "advocate",
+        closed_by: "advisor",
         notes: notes
       })
     });
 
     setShowCloseModal(false);
     setSubmitting(false);
-    navigate(createPageUrl("AdvocateQueue"));
+    navigate(createPageUrl("AdvisorQueue"));
   };
 
   if (isLoading || !user || !request) {
@@ -189,7 +189,7 @@ export default function AdvocateRequestDetail() {
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
-          onClick={() => navigate(createPageUrl("AdvocateQueue"))}
+          onClick={() => navigate(createPageUrl("AdvisorQueue"))}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Queue
@@ -228,7 +228,7 @@ export default function AdvocateRequestDetail() {
         <Alert className="bg-green-50 border-green-200">
           <CheckCircle className="w-4 h-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Advocate tasks have been marked as complete for this application.
+            Advisor tasks have been marked as complete for this application.
           </AlertDescription>
         </Alert>
       )}
@@ -335,8 +335,8 @@ export default function AdvocateRequestDetail() {
                         <File className="w-4 h-4 text-indigo-600 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-slate-700 truncate">{file.name}</p>
-                          {file.uploaded_by === "advocate" && (
-                            <p className="text-xs text-green-600">Uploaded by advocate</p>
+                          {(file.uploaded_by === "advisor" || file.uploaded_by === "advocate") && (
+                            <p className="text-xs text-green-600">Uploaded by advisor</p>
                           )}
                         </div>
                       </div>
@@ -349,7 +349,7 @@ export default function AdvocateRequestDetail() {
                         >
                           View
                         </a>
-                        {file.uploaded_by === "advocate" && request.status !== "Closed" && (
+                        {(file.uploaded_by === "advisor" || file.uploaded_by === "advocate") && request.status !== "Closed" && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -379,7 +379,7 @@ export default function AdvocateRequestDetail() {
               <div className="flex items-start gap-3">
                 <User className="w-4 h-4 text-indigo-600 mt-0.5" />
                 <div>
-                  <p className="text-slate-600">Advocate</p>
+                  <p className="text-slate-600">Advisor</p>
                   <p className="font-medium text-slate-800">{request.advocate_name || "Unassigned"}</p>
                 </div>
               </div>
@@ -417,7 +417,7 @@ export default function AdvocateRequestDetail() {
               Mark Tasks Complete
             </DialogTitle>
             <DialogDescription>
-              Mark your advocate tasks as complete for this application.
+              Mark your advisor tasks as complete for this application.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
