@@ -69,7 +69,6 @@ export default function Layout({ children, currentPageName }) {
   const permissions = user?.dashboard_permissions || {};
 
   const studentNavItems = [
-    { name: "Dashboard", icon: Home, page: "Home" },
     { name: "Apply for Fund", icon: PlusCircle, page: "Apply" },
     { name: "My Requests", icon: FileText, page: "MyRequests" },
   ];
