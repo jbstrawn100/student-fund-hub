@@ -125,7 +125,7 @@ export default function AdvisorRequestDetail() {
     setSubmitting(true);
 
     await base44.entities.FundRequest.update(request.id, {
-      advocate_tasks_completed: true
+      advisor_tasks_completed: true
     });
 
     if (notes.trim()) {
@@ -201,7 +201,7 @@ export default function AdvisorRequestDetail() {
         description={`Review and manage this application`}
         actions={
           <div className="flex items-center gap-2">
-            {!request.advocate_tasks_completed && (
+            {!request.advisor_tasks_completed && (
               <Button
                 onClick={() => setShowCompleteModal(true)}
                 className="bg-green-600 hover:bg-green-700"
@@ -224,7 +224,7 @@ export default function AdvisorRequestDetail() {
       />
 
       {/* Status Banner */}
-      {request.advocate_tasks_completed && (
+      {request.advisor_tasks_completed && (
         <Alert className="bg-green-50 border-green-200">
           <CheckCircle className="w-4 h-4 text-green-600" />
           <AlertDescription className="text-green-800">
@@ -380,7 +380,7 @@ export default function AdvisorRequestDetail() {
                 <User className="w-4 h-4 text-indigo-600 mt-0.5" />
                 <div>
                   <p className="text-slate-600">Advisor</p>
-                  <p className="font-medium text-slate-800">{request.advocate_name || "Unassigned"}</p>
+                  <p className="font-medium text-slate-800">{request.advisor_name || "Unassigned"}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

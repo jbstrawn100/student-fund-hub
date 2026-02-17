@@ -47,6 +47,8 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import AdvisorQueue from './pages/AdvisorQueue';
+import AdvisorRequestDetail from './pages/AdvisorRequestDetail';
 import Apply from './pages/Apply';
 import AuditLog from './pages/AuditLog';
 import CreateFund from './pages/CreateFund';
@@ -65,12 +67,12 @@ import Rules from './pages/Rules';
 import Settings from './pages/Settings';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import Users from './pages/Users';
-import AdvisorQueue from './pages/AdvisorQueue';
-import AdvisorRequestDetail from './pages/AdvisorRequestDetail';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AdvisorQueue": AdvisorQueue,
+    "AdvisorRequestDetail": AdvisorRequestDetail,
     "Apply": Apply,
     "AuditLog": AuditLog,
     "CreateFund": CreateFund,
@@ -89,8 +91,6 @@ export const PAGES = {
     "Settings": Settings,
     "SuperAdminDashboard": SuperAdminDashboard,
     "Users": Users,
-    "AdvisorQueue": AdvisorQueue,
-    "AdvisorRequestDetail": AdvisorRequestDetail,
 }
 
 export const pagesConfig = {

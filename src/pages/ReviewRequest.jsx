@@ -195,6 +195,7 @@ export default function ReviewRequest() {
 
     // Create audit log
     await base44.entities.AuditLog.create({
+      organization_id: request.organization_id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: `REVIEW_${decision.toUpperCase().replace(" ", "_")}`,
@@ -235,6 +236,7 @@ export default function ReviewRequest() {
 
       if (message) {
         await base44.entities.Notification.create({
+          organization_id: request.organization_id,
           user_id: request.student_user_id,
           user_email: request.student_email,
           type: notifConfig.type,
@@ -308,6 +310,7 @@ export default function ReviewRequest() {
 
     // Create audit log
     await base44.entities.AuditLog.create({
+      organization_id: request.organization_id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "DISBURSEMENT_CREATED",
@@ -325,6 +328,7 @@ export default function ReviewRequest() {
     // Notify student about payment
     const isPaidInFull = newStatus === "Paid";
     await base44.entities.Notification.create({
+      organization_id: request.organization_id,
       user_id: request.student_user_id,
       user_email: request.student_email,
       type: "paid",
@@ -482,19 +486,23 @@ export default function ReviewRequest() {
                 <div>
                   <p className="text-sm text-slate-500 mb-2">Attachments</p>
                   <div className="space-y-2">
-                    {request.attachments.map((url, index) => (
-                      <a
-                        key={index}
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-                      >
-                        <FileText className="w-4 h-4 text-indigo-600" />
-                        <span className="text-sm text-indigo-700 flex-1">Attachment {index + 1}</span>
-                        <ExternalLink className="w-4 h-4 text-indigo-400" />
-                      </a>
-                    ))}
+                    {request.attachments.map((attachment, index) => {
+                      const fileUrl = typeof attachment === 'string' ? attachment : attachment.url;
+                      const fileName = typeof attachment === 'string' ? `Attachment ${index + 1}` : (attachment.name || `Attachment ${index + 1}`);
+                      return (
+                        <a
+                          key={index}
+                          href={fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                        >
+                          <FileText className="w-4 h-4 text-indigo-600" />
+                          <span className="text-sm text-indigo-700 flex-1">{fileName}</span>
+                          <ExternalLink className="w-4 h-4 text-indigo-400" />
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               )}

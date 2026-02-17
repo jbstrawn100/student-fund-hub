@@ -61,7 +61,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const userRole = user?.app_role || "student";
-  const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
+  const isStaff = ["reviewer", "approver", "advisor", "fund_manager", "admin"].includes(userRole);
   const isAdvisor = userRole === "advisor";
   const isAdmin = userRole === "admin";
   const isFundManager = userRole === "fund_manager" || isAdmin;
@@ -89,7 +89,8 @@ export default function Layout({ children, currentPageName }) {
     ...((isAdmin || permissions.access_settings) ? [{ name: "Settings", icon: Settings, page: "Settings" }] : []),
   ];
 
-  const navItems = isStaff ? staffNavItems : (isAdvisor ? advisorNavItems : studentNavItems);
+  // Advisors with individual assignments get simplified nav, other staff get full sidebar
+  const navItems = (isStaff && !isAdvisor) ? staffNavItems : (isAdvisor ? advisorNavItems : studentNavItems);
 
   // PublicHome and SuperAdminDashboard don't need layout
   if (currentPageName === "PublicHome" || currentPageName === "SuperAdminDashboard") {
@@ -108,7 +109,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   // Student and Advisor layout - top navigation only
-  if (!isStaff && !isAdvisor) {
+  if (!isStaff || isAdvisor) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
         {/* Top Navigation */}

@@ -47,7 +47,7 @@ export default function AdvisorQueue() {
     queryFn: async () => {
       if (!user?.id) return [];
       return base44.entities.FundRequest.filter(
-        { advocate_user_id: user.id },
+        { advisor_user_id: user.id },
         "-created_date"
       );
     },
@@ -62,8 +62,8 @@ export default function AdvisorQueue() {
     return matchesSearch;
   });
 
-  const pendingRequests = filteredRequests.filter(r => !r.advocate_tasks_completed);
-  const completedRequests = filteredRequests.filter(r => r.advocate_tasks_completed);
+  const pendingRequests = filteredRequests.filter(r => !r.advisor_tasks_completed);
+  const completedRequests = filteredRequests.filter(r => r.advisor_tasks_completed);
 
   if (!user) {
     return (
@@ -143,15 +143,15 @@ export default function AdvisorQueue() {
               {filteredRequests.map((request) => (
                 <div key={request.id} className="p-4 hover:bg-slate-50">
                   <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="font-semibold text-slate-800">{request.student_full_name}</p>
-                      <p className="text-sm text-slate-500">{request.request_id}</p>
-                    </div>
-                    {request.advocate_tasks_completed ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Clock className="w-5 h-5 text-amber-500" />
-                    )}
+                  <div>
+                    <p className="font-semibold text-slate-800">{request.student_full_name}</p>
+                    <p className="text-sm text-slate-500">{request.request_id}</p>
+                  </div>
+                  {request.advisor_tasks_completed ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Clock className="w-5 h-5 text-amber-500" />
+                  )}
                   </div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -213,7 +213,7 @@ export default function AdvisorQueue() {
                         <StatusBadge status={request.status} />
                       </TableCell>
                       <TableCell>
-                        {request.advocate_tasks_completed ? (
+                        {request.advisor_tasks_completed ? (
                           <div className="flex items-center gap-2 text-green-600">
                             <CheckCircle className="w-4 h-4" />
                             <span className="text-sm font-medium">Complete</span>

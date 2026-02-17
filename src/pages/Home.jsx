@@ -33,16 +33,16 @@ export default function Home() {
     const currentUser = await base44.auth.me();
     setUser(currentUser);
     
-    // Redirect students to Apply page
+    // Redirect non-staff users to Apply page
     const userRole = currentUser?.app_role || "student";
-    const isStaff = ["reviewer", "approver", "advisor", "fund_manager", "admin"].includes(userRole);
+    const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
     if (!isStaff) {
       navigate(createPageUrl("Apply"));
     }
   };
 
   const userRole = user?.app_role || "student";
-  const isStaff = ["reviewer", "approver", "advisor", "fund_manager", "admin"].includes(userRole);
+  const isStaff = ["reviewer", "approver", "fund_manager", "admin"].includes(userRole);
 
   if (!user) {
     return (
