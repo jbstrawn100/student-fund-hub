@@ -244,27 +244,50 @@ export default function Apply() {
   };
 
   const validateForm = () => {
-    const fields = [
-      "student_full_name",
-      "student_email",
-      "requested_amount",
-      "intended_use_category"
-    ];
-
-    // Add conditional fields based on fund configuration
-    if (selectedFund.application_fields?.phone?.enabled) {
-      fields.push("student_phone");
+    const newErrors = {};
+    
+    // Validate student_full_name
+    if (!formData.student_full_name || formData.student_full_name.trim().length === 0) {
+      newErrors.student_full_name = "Full name is required";
     }
-    if (selectedFund.application_fields?.intended_use_description?.enabled) {
-      fields.push("intended_use_description");
+    
+    // Validate student_email
+    if (!formData.student_email || !formData.student_email.includes("@")) {
+      newErrors.student_email = "Valid email is required";
     }
-    if (selectedFund.application_fields?.justification_paragraph?.enabled) {
-      fields.push("justification_paragraph");
+    
+    // Validate requested_amount
+    const amount = parseFloat(formData.requested_amount);
+    if (!formData.requested_amount || amount <= 0) {
+      newErrors.requested_amount = "Amount must be greater than 0";
+    } else if (selectedFund?.max_request_amount && amount > selectedFund.max_request_amount) {
+      newErrors.requested_amount = `Amount cannot exceed $${selectedFund.max_request_amount.toLocaleString()}`;
+    }
+    
+    // Validate intended_use_category
+    if (!formData.intended_use_category) {
+      newErrors.intended_use_category = "Category is required";
+    }
+    
+    // Validate phone if required
+    if ((selectedFund.application_fields?.phone?.required ?? false) && !formData.student_phone?.trim()) {
+      newErrors.student_phone = "Phone number is required";
+    }
+    
+    // Validate intended_use_description if required
+    if ((selectedFund.application_fields?.intended_use_description?.required ?? true) && 
+        (!formData.intended_use_description || formData.intended_use_description.trim().length < 30)) {
+      newErrors.intended_use_description = "Description must be at least 30 characters";
+    }
+    
+    // Validate justification_paragraph if required
+    if ((selectedFund.application_fields?.justification_paragraph?.required ?? true) && 
+        (!formData.justification_paragraph || formData.justification_paragraph.trim().length < 100)) {
+      newErrors.justification_paragraph = "Justification must be at least 100 characters";
     }
 
-    fields.forEach(field => validateField(field, formData[field]));
-
-    return Object.keys(errors).length === 0;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const generateRequestId = async () => {
