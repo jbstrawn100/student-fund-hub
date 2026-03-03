@@ -53,9 +53,13 @@ import {
   Shield,
   GraduationCap,
   UserCheck,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Check,
+  X,
+  ClipboardList
 } from "lucide-react";
 import { format } from "date-fns";
+import { useMutation } from "@tanstack/react-query";
 
 const roleColors = {
   student: "bg-blue-100 text-blue-800 border-blue-200",
@@ -86,6 +90,7 @@ export default function Users() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("student");
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
     loadUser();
@@ -99,6 +104,35 @@ export default function Users() {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ["allUsers"],
     queryFn: () => base44.entities.User.list("-created_date"),
+  });
+
+  const { data: accessRequests = [], isLoading: loadingRequests } = useQuery({
+    queryKey: ["accessRequests"],
+    queryFn: async () => {
+      if (!currentUser?.organization_id) return [];
+      return base44.entities.AccessRequest.filter({ organization_id: currentUser.organization_id }, "-created_date");
+    },
+    enabled: !!currentUser?.organization_id,
+  });
+
+  const updateAccessRequest = useMutation({
+    mutationFn: ({ id, status }) =>
+      base44.entities.AccessRequest.update(id, {
+        status,
+        reviewed_by: currentUser.full_name,
+        reviewed_at: new Date().toISOString(),
+      }),
+    onSuccess: async (_, variables) => {
+      queryClient.invalidateQueries(["accessRequests"]);
+      const request = accessRequests.find(r => r.id === variables.id);
+      if (request && variables.status === "approved") {
+        await base44.integrations.Core.SendEmail({
+          to: request.email,
+          subject: "Access Request Approved",
+          body: `Dear ${request.full_name},\n\nYour access request has been approved! You can now sign in to submit fund applications.\n\nBest regards,\nStudent Funds Team`
+        });
+      }
+    },
   });
 
   const filteredUsers = users.filter((user) => {
@@ -172,22 +206,44 @@ export default function Users() {
     );
   }
 
+  const pendingCount = accessRequests.filter(r => r.status === "pending").length;
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="User Management"
-        description="Manage users and their roles"
+        description="Manage users, roles, and access requests"
         actions={
-          <Button 
-            onClick={() => setShowInviteModal(true)}
-            className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Invite User
-          </Button>
+          activeTab === "users" && (
+            <Button
+              onClick={() => setShowInviteModal(true)}
+              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Invite User
+            </Button>
+          )
         }
       />
 
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="users">
+            <UsersIcon className="w-4 h-4 mr-2" />
+            Users
+          </TabsTrigger>
+          <TabsTrigger value="access">
+            <ClipboardList className="w-4 h-4 mr-2" />
+            Access Requests
+            {pendingCount > 0 && (
+              <Badge className="ml-2 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                {pendingCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users" className="space-y-4 mt-4">
       {/* Filters */}
       <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
         <CardContent className="p-4">
@@ -336,6 +392,117 @@ export default function Users() {
           </>
         )}
       </Card>
+        </TabsContent>
+
+        <TabsContent value="access" className="mt-4">
+          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <CardContent className="p-0">
+              {loadingRequests ? (
+                <LoadingSpinner className="py-16" />
+              ) : accessRequests.length === 0 ? (
+                <EmptyState
+                  icon={Mail}
+                  title="No Access Requests"
+                  description="No students have requested access yet."
+                />
+              ) : (
+                <>
+                  {/* Mobile */}
+                  <div className="md:hidden divide-y">
+                    {accessRequests.map((request) => (
+                      <div key={request.id} className="p-4 space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold text-slate-800">{request.full_name}</p>
+                            <p className="text-sm text-slate-500">{request.email}</p>
+                            {request.phone && <p className="text-sm text-slate-500">{request.phone}</p>}
+                          </div>
+                          <StatusBadge status={request.status} />
+                        </div>
+                        {request.reason && <p className="text-sm text-slate-600">{request.reason}</p>}
+                        <p className="text-xs text-slate-400">{format(new Date(request.created_date), "MMM d, yyyy")}</p>
+                        {request.status === "pending" && (
+                          <div className="flex gap-2 pt-1">
+                            <Button size="sm" variant="outline" className="flex-1 border-green-300 text-green-700 hover:bg-green-50"
+                              onClick={() => updateAccessRequest.mutate({ id: request.id, status: "approved" })}
+                              disabled={updateAccessRequest.isPending}>
+                              <Check className="w-3 h-3 mr-1" /> Approve
+                            </Button>
+                            <Button size="sm" variant="outline" className="flex-1 border-red-300 text-red-700 hover:bg-red-50"
+                              onClick={() => updateAccessRequest.mutate({ id: request.id, status: "denied" })}
+                              disabled={updateAccessRequest.isPending}>
+                              <X className="w-3 h-3 mr-1" /> Deny
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {/* Desktop */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-slate-50/50">
+                          <TableHead>Student</TableHead>
+                          <TableHead>Contact</TableHead>
+                          <TableHead>Student ID</TableHead>
+                          <TableHead>Reason</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {accessRequests.map((request) => (
+                          <TableRow key={request.id} className="hover:bg-slate-50/50">
+                            <TableCell className="font-medium">{request.full_name}</TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                <p>{request.email}</p>
+                                {request.phone && <p className="text-slate-500">{request.phone}</p>}
+                              </div>
+                            </TableCell>
+                            <TableCell>{request.student_id || "-"}</TableCell>
+                            <TableCell className="max-w-xs">
+                              <p className="text-sm text-slate-600 line-clamp-2">{request.reason}</p>
+                            </TableCell>
+                            <TableCell className="text-sm text-slate-500">
+                              {format(new Date(request.created_date), "MMM d, yyyy")}
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge status={request.status} />
+                            </TableCell>
+                            <TableCell>
+                              {request.status === "pending" ? (
+                                <div className="flex gap-2">
+                                  <Button size="sm" variant="outline" className="border-green-300 text-green-700 hover:bg-green-50"
+                                    onClick={() => updateAccessRequest.mutate({ id: request.id, status: "approved" })}
+                                    disabled={updateAccessRequest.isPending}>
+                                    <Check className="w-3 h-3 mr-1" /> Approve
+                                  </Button>
+                                  <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-50"
+                                    onClick={() => updateAccessRequest.mutate({ id: request.id, status: "denied" })}
+                                    disabled={updateAccessRequest.isPending}>
+                                    <X className="w-3 h-3 mr-1" /> Deny
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="text-sm text-slate-500">
+                                  {request.reviewed_by && <p>By {request.reviewed_by}</p>}
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Invite Modal */}
       <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
