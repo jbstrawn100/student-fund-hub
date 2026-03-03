@@ -43,14 +43,7 @@ export default function Settings() {
     },
   });
 
-  const { data: accessRequests = [] } = useQuery({
-    queryKey: ["accessRequests"],
-    queryFn: async () => {
-      if (!user?.organization_id) return [];
-      return base44.entities.AccessRequest.filter({ organization_id: user.organization_id }, "-created_date");
-    },
-    enabled: !!user?.organization_id,
-  });
+
 
   useEffect(() => {
     if (settings) {
@@ -91,28 +84,7 @@ export default function Settings() {
     saveSettings.mutate(formData);
   };
 
-  const updateAccessRequest = useMutation({
-    mutationFn: ({ id, status, notes }) => 
-      base44.entities.AccessRequest.update(id, {
-        status,
-        reviewed_by: user.full_name,
-        reviewed_at: new Date().toISOString(),
-        notes
-      }),
-    onSuccess: async (_, variables) => {
-      queryClient.invalidateQueries(["accessRequests"]);
-      
-      // Send notification email
-      const request = accessRequests.find(r => r.id === variables.id);
-      if (request && variables.status === "approved") {
-        await base44.integrations.Core.SendEmail({
-          to: request.email,
-          subject: "Access Request Approved",
-          body: `Dear ${request.full_name},\n\nYour access request has been approved! You can now sign in to submit fund applications.\n\nBest regards,\n${formData.organization_name || "Student Funds Team"}`
-        });
-      }
-    },
-  });
+
 
   if (!user) {
     return (
@@ -138,16 +110,8 @@ export default function Settings() {
       />
 
       <Tabs defaultValue="organization" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList>
           <TabsTrigger value="organization">Organization</TabsTrigger>
-          <TabsTrigger value="access">
-            Access Requests
-            {accessRequests.filter(r => r.status === "pending").length > 0 && (
-              <Badge className="ml-2 bg-red-500">
-                {accessRequests.filter(r => r.status === "pending").length}
-              </Badge>
-            )}
-          </TabsTrigger>
         </TabsList>
 
         {/* Organization Settings */}
@@ -224,94 +188,6 @@ export default function Settings() {
                   Save Settings
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Access Requests */}
-        <TabsContent value="access">
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
-            <CardHeader>
-              <CardTitle>Student Access Requests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <LoadingSpinner className="py-8" />
-              ) : accessRequests.length === 0 ? (
-                <div className="text-center py-12 text-slate-500">
-                  <Mail className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-                  <p>No access requests yet</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Student ID</TableHead>
-                        <TableHead>Reason</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {accessRequests.map((request) => (
-                        <TableRow key={request.id}>
-                          <TableCell className="font-medium">{request.full_name}</TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <p>{request.email}</p>
-                              {request.phone && <p className="text-slate-500">{request.phone}</p>}
-                            </div>
-                          </TableCell>
-                          <TableCell>{request.student_id || "-"}</TableCell>
-                          <TableCell className="max-w-xs">
-                            <p className="text-sm text-slate-600 line-clamp-2">{request.reason}</p>
-                          </TableCell>
-                          <TableCell className="text-sm text-slate-500">
-                            {format(new Date(request.created_date), "MMM d, yyyy")}
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge status={request.status} />
-                          </TableCell>
-                          <TableCell>
-                            {request.status === "pending" ? (
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => updateAccessRequest.mutate({ id: request.id, status: "approved" })}
-                                  disabled={updateAccessRequest.isPending}
-                                >
-                                  <Check className="w-3 h-3 mr-1" />
-                                  Approve
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => updateAccessRequest.mutate({ id: request.id, status: "denied" })}
-                                  disabled={updateAccessRequest.isPending}
-                                >
-                                  <X className="w-3 h-3 mr-1" />
-                                  Deny
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="text-sm text-slate-500">
-                                {request.reviewed_by && (
-                                  <p>By {request.reviewed_by}</p>
-                                )}
-                              </div>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>
