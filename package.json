@@ -9,7 +9,10 @@
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:migrate": "psql -h ${PGHOST:-localhost} -p ${PGPORT:-54322} -U ${PGUSER:-postgres} -d ${PGDATABASE:-postgres} -v ON_ERROR_STOP=1 -f supabase/migrations/20260308000000_create_app_schema.sql",
+    "db:seed": "node scripts/import-from-csv.mjs",
+    "db:setup": "npm run db:migrate && npm run db:seed"
   },
   "dependencies": {
     "@base44/sdk": "^0.8.3",
@@ -79,6 +82,8 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "csv-parse": "^5.6.0",
+    "pg": "^8.13.0",
     "@eslint/js": "^9.19.0",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
