@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { base44 } from "@/api/base44Client";
+import { api } from "@/api/supabaseApi";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,7 @@ export default function CreateFund() {
   }, []);
 
   const loadUser = async () => {
-    const currentUser = await base44.auth.me();
+    const currentUser = await api.auth.me();
     setUser(currentUser);
   };
 
@@ -88,9 +88,9 @@ export default function CreateFund() {
       application_fields: formData.application_fields
     };
 
-    const newFund = await base44.entities.Fund.create(fundData);
+    const newFund = await api.entities.Fund.create(fundData);
 
-    await base44.entities.AuditLog.create({
+    await api.entities.AuditLog.create({
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "FUND_CREATED",
