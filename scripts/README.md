@@ -9,7 +9,7 @@
 
 ```bash
 # With local Docker Postgres (default port 54322)
-psql -h localhost -p 54322 -U postgres -d postgres -f supabase/migrations/20260308000000_create_app_schema.sql
+psql -h localhost -p 54322 -U supabase_admin -d postgres -f supabase/migrations/20260308000000_create_app_schema.sql
 ```
 
 Or use the import script (it runs the migration first).
@@ -26,7 +26,7 @@ Imports all `doc/*_export.csv` files into Postgres (truncates app tables then in
 **Run:**
 
 ```bash
-# Default: postgresql://postgres:postgres@localhost:54322/postgres
+# Default: postgresql://supabase_admin:postgres@localhost:54322/postgres
 ./scripts/import-from-csv.sh
 
 # Or with custom URL

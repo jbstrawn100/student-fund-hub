@@ -2,7 +2,7 @@
 /**
  * Import doc/*.csv into local Postgres. Handles empty strings → NULL and types.
  * Usage: node scripts/import-from-csv.mjs [connection_string]
- * Default: postgresql://postgres:postgres@localhost:54322/postgres
+ * Default: postgresql://supabase_admin:postgres@localhost:54322/postgres
  * Requires: npm install pg csv-parse (or use as devDependencies)
  */
 
@@ -16,7 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.join(__dirname, '..');
 const DOC = path.join(PROJECT_ROOT, 'doc');
 
-const CONN = process.env.DATABASE_URL || process.argv[2] || 'postgresql://postgres:postgres@localhost:54322/postgres';
+const CONN = process.env.DATABASE_URL || process.argv[2] || 'postgresql://supabase_admin:postgres@localhost:54322/postgres';
 
 // Table name -> { file, columns that are numeric, boolean, timestamptz, date, jsonb }
 const TABLE_CONFIG = {

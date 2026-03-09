@@ -6,7 +6,7 @@
  *
  * Usage: node scripts/create-admin-user.mjs
  * Env:   ADMIN_DEFAULT_PASSWORD (default: changeme)
- *        DATABASE_URL (default: postgresql://postgres:postgres@localhost:54322/postgres)
+ *        DATABASE_URL (default: postgresql://supabase_admin:postgres@localhost:54322/postgres)
  *        SUPABASE_AUTH_URL (default: http://localhost:9999)
  */
 import pg from 'pg';
@@ -15,7 +15,7 @@ import { randomUUID } from 'crypto';
 
 const EMAIL = 'dev@gotham.design';
 const DEFAULT_PASSWORD = process.env.ADMIN_DEFAULT_PASSWORD || 'changeme';
-const DB_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:54322/postgres';
+const DB_URL = process.env.DATABASE_URL || 'postgresql://supabase_admin:postgres@localhost:54322/postgres';
 const AUTH_BASE = (process.env.SUPABASE_AUTH_URL || process.env.VITE_SUPABASE_URL || 'http://localhost:9999').replace(/\/$/, '');
 const ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
 

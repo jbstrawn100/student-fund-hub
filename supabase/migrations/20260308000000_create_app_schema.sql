@@ -1,5 +1,5 @@
 -- App schema: organizations, funds, requests, reviews, disbursements, notifications, audit.
--- Run with: psql -h localhost -p 54322 -U postgres -d postgres -f supabase/migrations/20260308000000_create_app_schema.sql
+-- Run with: psql -h localhost -p 54322 -U supabase_admin -d postgres -f supabase/migrations/20260308000000_create_app_schema.sql
 
 -- Organizations
 CREATE TABLE IF NOT EXISTS public.organization (

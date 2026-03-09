@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p ./jsconfig.json",
     "preview": "vite preview",
-    "db:migrate": "psql -h ${PGHOST:-localhost} -p ${PGPORT:-54322} -U ${PGUSER:-postgres} -d ${PGDATABASE:-postgres} -v ON_ERROR_STOP=1 -f supabase/migrations/20260308000000_create_app_schema.sql",
+    "db:migrate": "set -e; for f in supabase/migrations/*.sql; do echo \"Running $f\"; psql -h ${PGHOST:-localhost} -p ${PGPORT:-54322} -U ${PGUSER:-supabase_admin} -d ${PGDATABASE:-postgres} -v ON_ERROR_STOP=1 -f \"$f\"; done",
     "db:seed": "node scripts/import-from-csv.mjs",
     "db:setup": "npm run db:migrate && npm run db:seed",
     "db:create-admin": "node scripts/create-admin-user.mjs"
