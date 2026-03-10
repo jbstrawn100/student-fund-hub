@@ -291,9 +291,9 @@ export default function ReviewRequest() {
       receipt_upload: disbursementData.receipt_upload
     });
 
-    // Calculate total disbursed for this request
+    // Calculate total disbursed for this request (new record already saved above)
     const allDisbursements = await base44.entities.Disbursement.filter({ fund_request_id: requestId });
-    const totalDisbursed = allDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0) + amountPaid;
+    const totalDisbursed = allDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0);
 
     // Update request status based on disbursement
     const newStatus = totalDisbursed >= request.requested_amount ? "Paid" : "Approved";
