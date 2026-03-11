@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import AttachmentList from "@/components/shared/AttachmentList";
 import {
   ArrowLeft,
   FileText,
@@ -26,8 +27,7 @@ import {
   Mail,
   Phone,
   Tag,
-  Paperclip,
-  File
+  Paperclip
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -281,23 +281,7 @@ export default function RequestDetail() {
                     <Paperclip className="w-4 h-4" />
                     Supporting Documents ({request.attachments.length})
                   </p>
-                  <div className="space-y-2">
-                    {request.attachments.map((attachment, index) => (
-                      <a
-                        key={index}
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors group"
-                      >
-                        <File className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                        <span className="text-sm text-indigo-700 flex-1 truncate">
-                          {attachment.name || `Attachment ${index + 1}`}
-                        </span>
-                        <ExternalLink className="w-4 h-4 text-indigo-400 group-hover:text-indigo-600" />
-                      </a>
-                    ))}
-                  </div>
+                  <AttachmentList attachments={request.attachments} />
                 </div>
               )}
             </CardContent>

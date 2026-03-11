@@ -26,6 +26,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import AttachmentList from "@/components/shared/AttachmentList";
 import {
   ArrowLeft,
   FileText,
@@ -290,9 +292,9 @@ export default function ReviewRequest() {
       receipt_upload: disbursementData.receipt_upload
     });
 
-    // Calculate total disbursed for this request
-    const allDisbursements = await api.entities.Disbursement.filter({ fund_request_id: requestId });
-    const totalDisbursed = allDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0) + amountPaid;
+    // Calculate total disbursed for this request (new record already saved above)
+    const allDisbursements = await base44.entities.Disbursement.filter({ fund_request_id: requestId });
+    const totalDisbursed = allDisbursements.reduce((sum, d) => sum + (d.amount_paid || 0), 0);
 
     // Update request status based on disbursement
     const newStatus = totalDisbursed >= request.requested_amount ? "Paid" : "Approved";
@@ -484,26 +486,8 @@ export default function ReviewRequest() {
               </div>
               {request.attachments && request.attachments.length > 0 && (
                 <div>
-                  <p className="text-sm text-slate-500 mb-2">Attachments</p>
-                  <div className="space-y-2">
-                    {request.attachments.map((attachment, index) => {
-                      const fileUrl = typeof attachment === 'string' ? attachment : attachment.url;
-                      const fileName = typeof attachment === 'string' ? `Attachment ${index + 1}` : (attachment.name || `Attachment ${index + 1}`);
-                      return (
-                        <a
-                          key={index}
-                          href={fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-                        >
-                          <FileText className="w-4 h-4 text-indigo-600" />
-                          <span className="text-sm text-indigo-700 flex-1">{fileName}</span>
-                          <ExternalLink className="w-4 h-4 text-indigo-400" />
-                        </a>
-                      );
-                    })}
-                  </div>
+                  <p className="text-sm text-slate-500 mb-2">Attachments ({request.attachments.length})</p>
+                  <AttachmentList attachments={request.attachments} />
                 </div>
               )}
             </CardContent>
