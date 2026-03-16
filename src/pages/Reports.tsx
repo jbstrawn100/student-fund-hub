@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, DollarSign, PieChart, TrendingUp, FileText, CheckCircle, XCircle, Clock, Wallet } from "lucide-react";
 import { format, startOfMonth, parseISO } from "date-fns";
 import { BarChart, Bar, PieChart as RechartPie, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { toast } from "@/components/ui/use-toast";
 
 interface ReportRequest {
   id: string;
@@ -217,6 +218,14 @@ export default function Reports() {
 
   // Export to CSV
   const exportToCSV = () => {
+    if (filteredRequests.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "Adjust your filters or date range to include at least one request before exporting.",
+        variant: "warning",
+      });
+      return;
+    }
     const csvRows: (string | number)[][] = [
       [
         "Request ID",

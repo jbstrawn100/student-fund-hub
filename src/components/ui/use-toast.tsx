@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+// How long to keep a toast mounted after it's been dismissed (for exit animations)
+const TOAST_REMOVE_DELAY = 200;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -133,6 +134,11 @@ function toast({ ...props }) {
       },
     },
   });
+
+  // Automatically dismiss the toast after 5 seconds
+  setTimeout(() => {
+    dismiss();
+  }, 5000);
 
   return {
     id,
