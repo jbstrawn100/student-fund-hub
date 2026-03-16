@@ -221,6 +221,12 @@ export default function FundDetail() {
 
     // Create audit log
     await api.entities.AuditLog.create({
+      // Ensure we always send a non-null primary key
+      id: (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function")
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2),
+      // Use the organization from the current user (or fall back to the fund)
+      organization_id: user.organization_id || fund.organization_id,
       actor_user_id: user.id,
       actor_name: user.full_name,
       action_type: "FUND_UPDATED",
