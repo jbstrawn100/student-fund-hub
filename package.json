@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc -p ./jsconfig.json",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "db:migrate": "set -e; DB_URL=${DATABASE_URL:-postgresql://${PGUSER:-supabase_admin}:${PGPASSWORD:-postgres}@${PGHOST:-localhost}:${PGPORT:-54322}/${PGDATABASE:-postgres}}; for f in supabase/migrations/*.sql; do echo \"Running $f\"; psql \"$DB_URL\" -v ON_ERROR_STOP=1 -f \"$f\"; done",
     "db:seed": "node scripts/import-from-csv.mjs",
