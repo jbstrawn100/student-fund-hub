@@ -28,7 +28,7 @@
  *
  *   import Home from './pages/Home';
  *   import Settings from './pages/Settings';
- *   import __Layout from './Layout.jsx';
+ *   import __Layout from './Layout';
  *
  *   export const PAGES = {
  *       "Home": Home,
@@ -67,7 +67,7 @@ import Rules from './pages/Rules';
 import Settings from './pages/Settings';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import Users from './pages/Users';
-import __Layout from './Layout.jsx';
+import __Layout from './Layout';
 
 
 export const PAGES = {
