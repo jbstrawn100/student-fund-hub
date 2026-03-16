@@ -75,12 +75,12 @@ export default function Profile() {
       />
 
       {/* Profile Card */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-indigo-600 to-violet-600"></div>
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 overflow-hidden">
+        <div className="h-24 bg-linear-to-r from-indigo-600 to-violet-600"></div>
         <CardContent className="pt-0">
           <div className="flex flex-col items-center -mt-12 pb-6">
             <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-violet-100 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 bg-linear-to-br from-indigo-100 to-violet-100 rounded-full flex items-center justify-center">
                 <span className="text-3xl font-bold text-indigo-700">
                   {user.full_name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
                 </span>
@@ -100,7 +100,7 @@ export default function Profile() {
       </Card>
 
       {/* Edit Profile */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardHeader>
           <CardTitle>Account Information</CardTitle>
           <CardDescription>Update your contact information</CardDescription>
@@ -181,7 +181,7 @@ export default function Profile() {
       </Card>
 
       {/* Account Stats */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardHeader>
           <CardTitle>Account Details</CardTitle>
         </CardHeader>

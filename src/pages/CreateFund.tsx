@@ -164,7 +164,7 @@ export default function CreateFund() {
         description="Set up a new fund for student assistance"
       />
 
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardHeader>
           <CardTitle>Fund Details</CardTitle>
           <CardDescription>Configure fund settings and constraints</CardDescription>

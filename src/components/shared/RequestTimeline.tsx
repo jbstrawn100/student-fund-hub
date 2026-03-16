@@ -47,7 +47,7 @@ export default function RequestTimeline({ status }) {
       {/* Progress Line */}
       <div className="absolute top-6 left-0 right-0 h-0.5 bg-slate-200">
         <div 
-          className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
+          className="h-full bg-linear-to-r from-indigo-500 to-violet-500 transition-all duration-500"
           style={{
             width: `${(timeline.filter(t => t.completed).length / timeline.length) * 100}%`
           }}

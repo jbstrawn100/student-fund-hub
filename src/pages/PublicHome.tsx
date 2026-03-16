@@ -80,7 +80,7 @@ export default function PublicHome() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -89,7 +89,7 @@ export default function PublicHome() {
               {organization.logo ? (
                 <img src={organization.logo} alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <div className="w-10 h-10 bg-linear-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
                   <GraduationCap className="w-6 h-6 text-white" />
                 </div>
               )}
@@ -121,7 +121,7 @@ export default function PublicHome() {
         </div>
 
         {/* Request Access Form */}
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 shadow-xl">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 shadow-xl">
           <CardHeader>
             <CardTitle className="text-2xl text-center">
               {submitted ? "Request Submitted!" : organization.welcome_message || "Request Access"}
@@ -195,7 +195,7 @@ export default function PublicHome() {
                 <Button
                   type="submit"
                   disabled={submitRequest.isPending}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-500/25"
+                  className="w-full bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-500/25"
                 >
                   {submitRequest.isPending ? (
                     <LoadingSpinner size="sm" className="mr-2" />

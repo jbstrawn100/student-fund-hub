@@ -532,7 +532,7 @@ export default function Apply() {
               return (
                 <Card
                   key={fund.id}
-                  className="cursor-pointer transition-all hover:shadow-lg hover:border-indigo-200 bg-white/70 backdrop-blur-sm"
+                  className="cursor-pointer transition-all hover:shadow-lg hover:border-indigo-200 bg-white/70 backdrop-blur-xs"
                   onClick={() => setSelectedFund(fund)}
                 >
                   <CardHeader>
@@ -583,7 +583,7 @@ export default function Apply() {
                         )}
                       </div>
 
-                      <Button className="w-full mt-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
+                      <Button className="w-full mt-4 bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
                         Apply Now
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
@@ -651,7 +651,7 @@ export default function Apply() {
         </Alert>
       )}
 
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardHeader>
           <CardTitle>Application Form</CardTitle>
           <CardDescription>All fields marked with * are required</CardDescription>
@@ -875,7 +875,7 @@ export default function Apply() {
                     className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <File className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                      <File className="w-4 h-4 text-indigo-600 shrink-0" />
                       <span className="text-sm text-slate-700 truncate">{file.name}</span>
                     </div>
                     <Button
@@ -907,7 +907,7 @@ export default function Apply() {
             <Button
               onClick={handleSubmit}
               disabled={!isFormValid || submitting}
-              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 order-1 sm:order-2"
+              className="bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 order-1 sm:order-2"
             >
               <Send className="w-4 h-4 mr-2" />
               Submit Application
@@ -966,7 +966,7 @@ export default function Apply() {
             <Button
               onClick={confirmSubmit}
               disabled={submitting}
-              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+              className="bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
             >
               {submitting ? (
                 <LoadingSpinner size="sm" className="mr-2" />

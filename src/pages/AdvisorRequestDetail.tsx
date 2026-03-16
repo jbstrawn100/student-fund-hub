@@ -268,7 +268,7 @@ export default function AdvisorRequestDetail() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Request Overview */}
-          <Card className="bg-white/70 backdrop-blur-sm">
+          <Card className="bg-white/70 backdrop-blur-xs">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Request Details
@@ -322,7 +322,7 @@ export default function AdvisorRequestDetail() {
           </Card>
 
           {/* Supporting Documents */}
-          <Card className="bg-white/70 backdrop-blur-sm">
+          <Card className="bg-white/70 backdrop-blur-xs">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Paperclip className="w-5 h-5" />
@@ -363,7 +363,7 @@ export default function AdvisorRequestDetail() {
                       className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <File className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                        <File className="w-4 h-4 text-indigo-600 shrink-0" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-slate-700 truncate">{file.name}</p>
                           {(file.uploaded_by === "advisor" || file.uploaded_by === "advocate") && (
@@ -402,7 +402,7 @@ export default function AdvisorRequestDetail() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Info */}
-          <Card className="bg-gradient-to-br from-indigo-50 to-violet-50 border-indigo-200">
+          <Card className="bg-linear-to-br from-indigo-50 to-violet-50 border-indigo-200">
             <CardHeader>
               <CardTitle className="text-lg">Quick Info</CardTitle>
             </CardHeader>

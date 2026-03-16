@@ -146,7 +146,7 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30 p-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-purple-50/30 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -166,7 +166,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Organizations List */}
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardHeader>
             <CardTitle>Organizations</CardTitle>
           </CardHeader>

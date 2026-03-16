@@ -113,7 +113,7 @@ export default function Settings() {
 
         {/* Organization Settings */}
         <TabsContent value="organization">
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardHeader>
               <CardTitle>Organization Information</CardTitle>
             </CardHeader>

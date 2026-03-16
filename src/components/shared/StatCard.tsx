@@ -36,7 +36,7 @@ export default function StatCard({
   };
 
   return (
-    <Card className="p-6 bg-white/70 backdrop-blur-sm border-slate-200/50 hover:shadow-lg transition-all duration-300">
+    <Card className="p-6 bg-white/70 backdrop-blur-xs border-slate-200/50 hover:shadow-lg transition-all duration-300">
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-sm font-medium text-slate-500">{title}</p>
@@ -48,7 +48,7 @@ export default function StatCard({
           )}
         </div>
         {Icon && (
-          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[color]} shadow-lg flex items-center justify-center`}>
+          <div className={`w-12 h-12 rounded-xl bg-linear-to-br ${colorClasses[color]} shadow-lg flex items-center justify-center`}>
             <Icon className="w-6 h-6 text-white" />
           </div>
         )}

@@ -281,7 +281,7 @@ export default function Users() {
           activeTab === "users" && (
             <Button
               onClick={() => setShowInviteModal(true)}
-              className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+              className="bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
             >
               <UserPlus className="w-4 h-4 mr-2" />
               Invite User
@@ -309,7 +309,7 @@ export default function Users() {
 
         <TabsContent value="users" className="space-y-4 mt-4">
       {/* Filters */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -341,7 +341,7 @@ export default function Users() {
       </Card>
 
       {/* Users Table */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 overflow-hidden">
         {isLoading ? (
           <LoadingSpinner className="py-16" />
         ) : filteredUsers.length === 0 ? (
@@ -459,7 +459,7 @@ export default function Users() {
         </TabsContent>
 
         <TabsContent value="access" className="mt-4">
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardContent className="p-0">
               {loadingRequests ? (
                 <LoadingSpinner className="py-16" />

@@ -95,7 +95,7 @@ export default function StatusTimeline({ request, reviews = [], disbursements = 
 
           const lineColors = {
             completed: "bg-emerald-500",
-            active: "bg-gradient-to-r from-emerald-500 to-slate-200",
+            active: "bg-linear-to-r from-emerald-500 to-slate-200",
             denied: "bg-red-500",
             pending: "bg-slate-200"
           };

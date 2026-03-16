@@ -144,8 +144,8 @@ export default function RequestDetail() {
       </div>
 
       {/* Header Card */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
-        <div className="p-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 overflow-hidden">
+        <div className="p-6 bg-linear-to-r from-indigo-600 to-violet-600 text-white">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
@@ -178,7 +178,7 @@ export default function RequestDetail() {
       </Card>
 
       {/* Status Timeline */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardHeader>
           <CardTitle className="text-lg">Application Progress</CardTitle>
         </CardHeader>
@@ -205,7 +205,7 @@ export default function RequestDetail() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Application Details */}
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardHeader>
               <CardTitle className="text-lg">Application Details</CardTitle>
             </CardHeader>
@@ -288,7 +288,7 @@ export default function RequestDetail() {
           </Card>
 
           {/* Activity / Reviews */}
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <MessageSquare className="w-5 h-5" />
@@ -320,7 +320,7 @@ export default function RequestDetail() {
                         className={`p-4 rounded-xl border ${decisionColors[review.decision] || "bg-slate-50 border-slate-200"}`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-full bg-white border-2 border-current flex items-center justify-center flex-shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-white border-2 border-current flex items-center justify-center shrink-0">
                             {isStudentResponse ? (
                               <User className="w-5 h-5" />
                             ) : (
@@ -405,7 +405,7 @@ export default function RequestDetail() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Timeline Info */}
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardHeader>
               <CardTitle className="text-lg">Timeline</CardTitle>
             </CardHeader>
@@ -497,7 +497,7 @@ export default function RequestDetail() {
           )}
 
           {/* Quick Stats */}
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardHeader>
               <CardTitle className="text-lg">Request Summary</CardTitle>
             </CardHeader>

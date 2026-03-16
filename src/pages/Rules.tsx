@@ -55,7 +55,7 @@ export default function Rules() {
       />
 
       {/* Fund Selector */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
             <div className="flex-1">
@@ -92,7 +92,7 @@ export default function Rules() {
         <>
           {/* Rules Overview */}
           {rules.length === 0 ? (
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardContent className="py-16">
                 <div className="text-center">
                   <GitBranch className="w-16 h-16 text-slate-300 mx-auto mb-4" />
@@ -110,7 +110,7 @@ export default function Rules() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <GitBranch className="w-5 h-5" />
@@ -123,7 +123,7 @@ export default function Rules() {
                     {/* Step Card */}
                     <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                       {/* Step Number */}
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
                           {rule.step_order}
                         </div>

@@ -125,7 +125,7 @@ export default function AuditLog() {
       />
 
       {/* Filters */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
@@ -166,7 +166,7 @@ export default function AuditLog() {
       </Card>
 
       {/* Audit Log Table */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-0">
           {isLoading ? (
             <LoadingSpinner className="py-16" />

@@ -300,7 +300,7 @@ export default function FundDetail() {
 
       {/* Budget Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-slate-500">Total Budget</p>
@@ -312,7 +312,7 @@ export default function FundDetail() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-slate-500">Paid</p>
@@ -325,7 +325,7 @@ export default function FundDetail() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-slate-500">Committed</p>
@@ -338,7 +338,7 @@ export default function FundDetail() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-slate-500">Remaining</p>
@@ -357,7 +357,7 @@ export default function FundDetail() {
       </div>
 
       {/* Budget Progress */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardHeader>
           <CardTitle className="text-lg">Budget Utilization</CardTitle>
         </CardHeader>
@@ -403,7 +403,7 @@ export default function FundDetail() {
 
       {isEditing ? (
         /* Edit Mode */
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardHeader>
             <CardTitle>Fund Details</CardTitle>
             <CardDescription>Update fund information and constraints</CardDescription>
@@ -763,7 +763,7 @@ export default function FundDetail() {
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             {/* Fund Info */}
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardHeader>
                 <CardTitle className="text-lg">Fund Information</CardTitle>
               </CardHeader>
@@ -808,7 +808,7 @@ export default function FundDetail() {
             </Card>
 
             {/* Recent Requests */}
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Recent Requests</CardTitle>
@@ -849,7 +849,7 @@ export default function FundDetail() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Constraints */}
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardHeader>
                 <CardTitle className="text-lg">Constraints</CardTitle>
               </CardHeader>
@@ -891,7 +891,7 @@ export default function FundDetail() {
             </Card>
 
             {/* Fund Owner */}
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardHeader>
                 <CardTitle className="text-lg">Fund Owner</CardTitle>
               </CardHeader>

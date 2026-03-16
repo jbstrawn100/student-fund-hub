@@ -418,8 +418,8 @@ export default function ReviewRequest() {
       </div>
 
       {/* Header Card */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
-        <div className="p-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 overflow-hidden">
+        <div className="p-6 bg-linear-to-r from-indigo-600 to-violet-600 text-white">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               {canSeePII && (
@@ -447,7 +447,7 @@ export default function ReviewRequest() {
         <div className="lg:col-span-2 space-y-6">
           {/* Student Info */}
           {canSeePII && (
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardHeader>
                 <CardTitle className="text-lg">Student Information</CardTitle>
               </CardHeader>
@@ -471,7 +471,7 @@ export default function ReviewRequest() {
           )}
 
           {/* Request Details */}
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardHeader>
               <CardTitle className="text-lg">Request Details</CardTitle>
             </CardHeader>
@@ -494,7 +494,7 @@ export default function ReviewRequest() {
           </Card>
 
           {/* Review Workflow */}
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardHeader>
               <CardTitle className="text-lg">Review Workflow</CardTitle>
             </CardHeader>
@@ -522,7 +522,7 @@ export default function ReviewRequest() {
                       <div key={review.id}>
                         <div className={`p-4 rounded-xl border ${decisionColors[review.decision]} ${isCurrentStep ? "ring-2 ring-offset-2 ring-indigo-400" : ""}`}>
                           <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white shrink-0">
                               <DecisionIcon className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -566,7 +566,7 @@ export default function ReviewRequest() {
 
           {/* Internal Comments Thread */}
           {internalComments.length > 0 && (
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
@@ -744,7 +744,7 @@ export default function ReviewRequest() {
 
           {/* Fund Info */}
           {fund && (
-            <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+            <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
               <CardHeader>
                 <CardTitle className="text-lg">Fund Details</CardTitle>
               </CardHeader>
@@ -766,7 +766,7 @@ export default function ReviewRequest() {
                 <div className="pt-2">
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+                      className="h-full bg-linear-to-r from-indigo-500 to-violet-500 rounded-full"
                       style={{
                         width: `${Math.min(100, ((fund.remaining_budget || fund.total_budget) / fund.total_budget) * 100)}%`,
                       }}
@@ -832,7 +832,7 @@ export default function ReviewRequest() {
           )}
 
           {/* Submitted Info */}
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
             <CardHeader>
               <CardTitle className="text-lg">Timeline</CardTitle>
             </CardHeader>

@@ -167,7 +167,7 @@ export default function Queue() {
       </Tabs>
 
       {/* Filters */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-4">
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
@@ -244,7 +244,7 @@ export default function Queue() {
       </Card>
 
       {/* Requests Table */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 overflow-hidden">
         {isLoading ? (
           <LoadingSpinner className="py-16" />
         ) : filteredRequests.length === 0 ? (

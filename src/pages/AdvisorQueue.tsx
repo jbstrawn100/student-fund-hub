@@ -82,7 +82,7 @@ export default function AdvisorQueue() {
 
       {/* Stats Cards */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+        <Card className="bg-linear-to-br from-amber-50 to-orange-50 border-amber-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -96,7 +96,7 @@ export default function AdvisorQueue() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <Card className="bg-linear-to-br from-green-50 to-emerald-50 border-green-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -112,7 +112,7 @@ export default function AdvisorQueue() {
       </div>
 
       {/* Search */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -127,7 +127,7 @@ export default function AdvisorQueue() {
       </Card>
 
       {/* Requests Table */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 overflow-hidden">
         {isLoading ? (
           <LoadingSpinner className="py-16" />
         ) : filteredRequests.length === 0 ? (

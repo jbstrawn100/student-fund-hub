@@ -95,7 +95,7 @@ function StaffDashboard({ user }) {
         title={`Welcome back, ${user.full_name?.split(" ")[0] || "Staff"}`}
         description="Overview of fund requests and disbursements"
         actions={
-          <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
+          <Button asChild className="bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
             <Link to={createPageUrl("Queue")}>
               View Queue <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
@@ -136,7 +136,7 @@ function StaffDashboard({ user }) {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Pending Requests */}
         {permissions.view_pending_requests !== false && (
-          <Card className="lg:col-span-2 bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="lg:col-span-2 bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Requests Needing Attention</CardTitle>
             <Button variant="ghost" size="sm" asChild>
@@ -184,7 +184,7 @@ function StaffDashboard({ user }) {
 
         {/* Fund Overview */}
         {permissions.view_fund_overview !== false && (
-          <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+          <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Fund Overview</CardTitle>
             <Button variant="ghost" size="sm" asChild>
@@ -218,7 +218,7 @@ function StaffDashboard({ user }) {
                       <div className="mt-2">
                         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full"
+                            className="h-full bg-linear-to-r from-indigo-500 to-violet-500 rounded-full"
                             style={{
                               width: `${Math.min(100, ((fund.remaining_budget || 0) / fund.total_budget) * 100)}%`,
                             }}

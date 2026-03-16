@@ -116,14 +116,14 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
   // Student and Advisor layout - top navigation only
   if (!isStaff || isAdvisor) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+      <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50/30">
         {/* Top Navigation */}
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
               <Link to={createPageUrl(isAdvisor ? "AdvisorQueue" : "Apply")} className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <div className="w-9 h-9 bg-linear-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
                   <GraduationCap className="w-5 h-5 text-white" />
                 </div>
                 <span className="font-bold text-slate-800 text-lg hidden sm:block">Student Funds</span>
@@ -184,7 +184,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-auto p-2 hover:bg-slate-100 rounded-xl">
                       <Avatar className="h-8 w-8 border-2 border-indigo-100">
-                        <AvatarFallback className="bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700 font-semibold text-sm">
+                        <AvatarFallback className="bg-linear-to-br from-indigo-100 to-violet-100 text-indigo-700 font-semibold text-sm">
                           {user?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
                         </AvatarFallback>
                       </Avatar>
@@ -256,7 +256,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
 
   // Staff layout - sidebar navigation
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-indigo-50/30">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 px-4 py-3">
         <div className="flex items-center justify-between">
@@ -268,7 +268,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-linear-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center">
                 <GraduationCap className="w-5 h-5 text-white" />
               </div>
               <span className="font-semibold text-slate-800">Student Funds</span>
@@ -284,7 +284,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-xs z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -299,7 +299,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
           {/* Logo */}
           <div className="p-6 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <div className="w-10 h-10 bg-linear-to-br from-indigo-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
                 <GraduationCap className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -320,7 +320,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                     isActive
-                      ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25"
+                      ? "bg-linear-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
@@ -371,7 +371,7 @@ function UserDropdown({ user, handleLogout, fullWidth }: UserDropdownProps) {
         >
           <div className="flex items-center gap-3">
             <Avatar className="h-9 w-9 border-2 border-indigo-100">
-              <AvatarFallback className="bg-gradient-to-br from-indigo-100 to-violet-100 text-indigo-700 font-semibold text-sm">
+              <AvatarFallback className="bg-linear-to-br from-indigo-100 to-violet-100 text-indigo-700 font-semibold text-sm">
                 {user?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>

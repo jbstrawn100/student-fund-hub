@@ -93,7 +93,7 @@ export default function MyRequests() {
         title="My Requests"
         description="Track and manage your fund requests"
         actions={
-          <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
+          <Button asChild className="bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
             <Link to={createPageUrl("Apply")}>
               <PlusCircle className="w-4 h-4 mr-2" />
               New Request
@@ -104,7 +104,7 @@ export default function MyRequests() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -116,7 +116,7 @@ export default function MyRequests() {
           </CardContent>
         </Card>
         
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -130,7 +130,7 @@ export default function MyRequests() {
           </CardContent>
         </Card>
         
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -146,7 +146,7 @@ export default function MyRequests() {
           </CardContent>
         </Card>
         
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -162,7 +162,7 @@ export default function MyRequests() {
       </div>
 
       {/* Filters */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -195,7 +195,7 @@ export default function MyRequests() {
       </Card>
 
       {/* Requests Table */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 overflow-hidden">
         {isLoading ? (
           <LoadingSpinner className="py-16" />
         ) : filteredRequests.length === 0 ? (

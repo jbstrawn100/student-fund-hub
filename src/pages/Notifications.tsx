@@ -72,7 +72,7 @@ export default function Notifications() {
       {isLoading ? (
         <LoadingSpinner className="py-16" />
       ) : notifications.length === 0 ? (
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-12 text-center">
             <Bell className="w-12 h-12 text-slate-300 mx-auto mb-3" />
             <p className="text-slate-500">No notifications yet</p>
@@ -83,7 +83,7 @@ export default function Notifications() {
           {notifications.map((notification) => (
             <Card
               key={notification.id}
-              className={`bg-white/70 backdrop-blur-sm border-slate-200/50 hover:shadow-md transition-all ${
+              className={`bg-white/70 backdrop-blur-xs border-slate-200/50 hover:shadow-md transition-all ${
                 !notification.is_read ? "ring-2 ring-indigo-200" : ""
               }`}
             >
@@ -98,14 +98,14 @@ export default function Notifications() {
                 >
                   <div className="flex items-start gap-4">
                     {!notification.is_read && (
-                      <div className="w-2 h-2 rounded-full bg-indigo-600 mt-2 flex-shrink-0" />
+                      <div className="w-2 h-2 rounded-full bg-indigo-600 mt-2 shrink-0" />
                     )}
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <h3 className={`${!notification.is_read ? "font-bold" : "font-semibold"} text-slate-900`}>
                           {notification.title}
                         </h3>
-                        <Badge variant={notification.is_read ? "outline" : "default"} className="text-xs flex-shrink-0">
+                        <Badge variant={notification.is_read ? "outline" : "default"} className="text-xs shrink-0">
                           {notification.type.replace(/_/g, " ")}
                         </Badge>
                       </div>

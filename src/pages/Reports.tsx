@@ -300,7 +300,7 @@ export default function Reports() {
       />
 
       {/* Filters */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <Select value={selectedFund} onValueChange={setSelectedFund}>
@@ -334,7 +334,7 @@ export default function Reports() {
 
       {/* Summary Stats */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-200">
+        <Card className="bg-linear-to-br from-indigo-50 to-indigo-100/50 border-indigo-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-indigo-700 font-medium">Total Budget</p>
@@ -344,7 +344,7 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
+        <Card className="bg-linear-to-br from-emerald-50 to-emerald-100/50 border-emerald-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-emerald-700 font-medium">Total Approved</p>
@@ -355,7 +355,7 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-violet-50 to-violet-100/50 border-violet-200">
+        <Card className="bg-linear-to-br from-violet-50 to-violet-100/50 border-violet-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-violet-700 font-medium">Total Paid</p>
@@ -366,7 +366,7 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-slate-50 to-slate-100/50 border-slate-200">
+        <Card className="bg-linear-to-br from-slate-50 to-slate-100/50 border-slate-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-slate-700 font-medium">Remaining</p>
@@ -382,28 +382,28 @@ export default function Reports() {
 
       {/* Request Counts */}
       <div className="grid md:grid-cols-4 gap-4">
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-4">
             <p className="text-sm text-slate-500 mb-1">Submitted</p>
             <p className="text-2xl font-bold">{submittedCount}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-4">
             <p className="text-sm text-slate-500 mb-1">Approved</p>
             <p className="text-2xl font-bold text-emerald-600">{approvedCount}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-4">
             <p className="text-sm text-slate-500 mb-1">Denied</p>
             <p className="text-2xl font-bold text-red-600">{deniedCount}</p>
           </CardContent>
         </Card>
 
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardContent className="p-4">
             <p className="text-sm text-slate-500 mb-1">Average Requested</p>
             <p className="text-2xl font-bold">${avgRequested.toLocaleString(undefined, {maximumFractionDigits: 0})}</p>
@@ -414,7 +414,7 @@ export default function Reports() {
       {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Spend Over Time */}
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <TrendingUp className="w-5 h-5" />
@@ -442,7 +442,7 @@ export default function Reports() {
         </Card>
 
         {/* Approved vs Denied */}
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <PieChart className="w-5 h-5" />
@@ -478,7 +478,7 @@ export default function Reports() {
       </div>
 
       {/* Usage by Category */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
@@ -549,7 +549,7 @@ export default function Reports() {
       </Card>
 
       {/* Recent Disbursements */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardHeader>
           <CardTitle>Recent Disbursements</CardTitle>
         </CardHeader>

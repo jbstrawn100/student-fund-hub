@@ -109,7 +109,7 @@ export default function Funds() {
         description="Create and manage funds for student assistance"
         actions={
           canManageFunds && (
-            <Button asChild className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
+            <Button asChild className="bg-linear-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700">
               <Link to={createPageUrl("CreateFund")}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Fund
@@ -138,7 +138,7 @@ export default function Funds() {
       </Tabs>
 
       {/* Search */}
-      <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50">
+      <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50">
         <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -172,7 +172,7 @@ export default function Funds() {
           }
         />
       ) : (
-        <Card className="bg-white/70 backdrop-blur-sm border-slate-200/50 overflow-hidden">
+        <Card className="bg-white/70 backdrop-blur-xs border-slate-200/50 overflow-hidden">
           {/* Mobile View */}
           <div className="md:hidden divide-y">
             {filteredFunds.map((fund) => {
