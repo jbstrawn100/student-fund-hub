@@ -875,7 +875,7 @@ export default function FundDetail() {
                     {fund.budget_enforcement || "None"}
                   </Badge>
                 </div>
-                {fund.allowed_categories && fund.allowed_categories.length > 0 && (
+                {Array.isArray(fund.allowed_categories) && fund.allowed_categories.length > 0 && (
                   <div>
                     <p className="text-slate-500 mb-2">Allowed Categories</p>
                     <div className="flex flex-wrap gap-1">
